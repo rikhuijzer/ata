@@ -34,8 +34,9 @@ async fn prompt_model(config: Config, prompt: String) -> TokioResult<String> {
     let mut sanitized_input: String = prompt.clone();
     sanitized_input.pop();
     let bearer = format!("Bearer {}", api_key);
+    // Passing newlines behind the prompt to get a more chat-like experience.
     let body = format!(
-        "{{\"model\": \"{}\", \"prompt\": \"{}\", \"max_tokens\": {}}}",
+        "{{\"model\": \"{}\", \"prompt\": \"{}\\n\\n\", \"max_tokens\": {}}}",
         model,
         sanitized_input,
         max_tokens
@@ -62,6 +63,24 @@ async fn prompt_model(config: Config, prompt: String) -> TokioResult<String> {
     let text: String = v["choices"][0]["text"].to_string();
 
     Ok(text)
+}
+
+fn remove_quotation_marks(mut text: String) -> String {
+    text.pop();
+    text.remove(0);
+    text
+}
+
+fn remove_leading_newlines(text: String) -> String {
+    let re = regex::Regex::new(r"^[\n]*").unwrap();
+    re.replace_all(&text, "").into_owned()
+}
+
+fn sanitize_response(response: String) -> String {
+    let mut text = response;
+    text = text.replace("\\n", "\n");
+    text = remove_quotation_marks(text);
+    remove_leading_newlines(text)
 }
 
 fn main() -> TokioResult<()> {
@@ -91,10 +110,9 @@ fn main() -> TokioResult<()> {
         let mut input = String::new();
         stdin().read_line(&mut input).unwrap();
 
-        let mut response = prompt_model(config.clone(), input)?;
-        response = response.replace("\\n", "\n");
-        response.pop();
-        response.remove(0);
-        println!("{}", response);
+        let response = prompt_model(config.clone(), input)?;
+        let sanitized = sanitize_response(response);
+        print!("{}\n", sanitized);
+        stdout().flush().unwrap();
     }
 }
