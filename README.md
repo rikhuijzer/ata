@@ -2,7 +2,7 @@
 
 OpenAI GPT in the terminal
 
-[![asciicast](https://asciinema.org/a/juh3Zcxn2kq25PI2BgZmRGlx2.svg)](https://asciinema.org/a/juh3Zcxn2kq25PI2BgZmRGlx2)
+[![asciicast](https://asciinema.org/a/553907.svg)](https://asciinema.org/a/553907)
 
 ## Usage
 
