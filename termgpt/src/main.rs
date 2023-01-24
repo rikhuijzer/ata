@@ -33,6 +33,7 @@ async fn prompt_model(config: Config, prompt: String) -> TokioResult<String> {
 
     let mut sanitized_input: String = prompt.clone();
     sanitized_input.pop();
+    sanitized_input = sanitized_input.replace("\"", "\\\"");
     let bearer = format!("Bearer {}", api_key);
     // Passing newlines behind the prompt to get a more chat-like experience.
     let body = format!(
