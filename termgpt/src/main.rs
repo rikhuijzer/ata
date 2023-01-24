@@ -112,7 +112,6 @@ fn main() -> TokioResult<()> {
 
         let response = prompt_model(config.clone(), input)?;
         let sanitized = sanitize_response(response);
-        print!("{}\n", sanitized);
-        stdout().flush().unwrap();
+        println!("\n{}\n", sanitized);
     }
 }
