@@ -23,3 +23,11 @@ and run:
 ```sh
 $ cargo run termgpt.toml
 ```
+
+## Development
+
+Use:
+
+```sh
+$ cargo watch -c -x 'run termgpt.toml'
+```

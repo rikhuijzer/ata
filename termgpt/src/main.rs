@@ -42,7 +42,7 @@ async fn prompt_model(config: Config, prompt: String) -> TokioResult<String> {
         sanitized_input,
         max_tokens
     );
-    // println!("{}", body);
+    println!("{}", body);
 
     let req = Request::builder()
         .method(Method::POST)
@@ -58,12 +58,16 @@ async fn prompt_model(config: Config, prompt: String) -> TokioResult<String> {
     let resp = client.request(req).await?;
     let body_bytes = hyper::body::to_bytes(resp.into_body()).await?;
 
-    // println!("{}", String::from_utf8(body_bytes.clone().to_vec()).unwrap());
+    println!("{}", String::from_utf8(body_bytes.clone().to_vec()).unwrap());
 
     let v: Value = serde_json::from_slice(&body_bytes)?;
-    let text: String = v["choices"][0]["text"].to_string();
-
-    Ok(text)
+    if v.get("error").is_some() {
+        let text: String = v["error"]["message"].to_string();
+        Ok(text)
+    } else {
+        let text: String = v["choices"][0]["text"].to_string();
+        Ok(text)
+    }
 }
 
 fn remove_quotation_marks(mut text: String) -> String {
