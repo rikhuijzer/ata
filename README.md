@@ -15,7 +15,8 @@ Next, set the API key, which model you want to use, and the maximum amount of to
 ```toml
 api_key = "<YOUR SECRET API KEY>"
 model = "text-davinci-003"
-max_tokens = "100"
+max_tokens = 250
+temperature = 0
 ```
 
 and run:
@@ -24,10 +25,13 @@ and run:
 $ cargo run termgpt.toml
 ```
 
-## Development
+## Developer notes
 
 Use:
 
 ```sh
 $ cargo watch -c -x 'run termgpt.toml'
 ```
+
+I've tried to use the `rustyline` and `inquire` terminal packages for Rust but they both capture CTRL + C which makes them unwieldy.
+That's why this package is going full Richard Hipp style and doing it ourselves.

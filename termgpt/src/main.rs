@@ -1,26 +1,28 @@
-use serde::Deserialize;
 use hyper::Body;
-use std::env;
-use std::fs::File;
-use serde_json::Value;
-use hyper_tls::HttpsConnector;
-use hyper::Request;
 use hyper::Client;
+use hyper::Method;
+use hyper::Request;
+use hyper_tls::HttpsConnector;
+use serde::Deserialize;
+use serde_json::Value;
+use serde_json::json;
+use std::env;
+use std::error::Error;
+use std::fs::File;
 use std::io::Read;
+use std::io::Write;
 use std::io::stdin;
 use std::io::stdout;
-use std::io::Write;
 use std::path::Path;
-use toml::from_str;
-use hyper::Method;
-use std::error::Error;
 use std::result::Result;
+use toml::from_str;
 
 #[derive(Clone, Deserialize, Debug)]
 struct Config {
     api_key: String,
     model: String,
-    max_tokens: String
+    max_tokens: i64,
+    temperature: i64
 }
 
 type TokioResult<T, E = Box<dyn Error + Send + Sync>> = Result<T, E>;
@@ -29,19 +31,20 @@ type TokioResult<T, E = Box<dyn Error + Send + Sync>> = Result<T, E>;
 async fn prompt_model(config: Config, prompt: String) -> TokioResult<String> {
     let api_key: String = config.clone().api_key;
     let model: String = config.clone().model;
-    let max_tokens: String = config.clone().max_tokens;
+    let max_tokens: i64 = config.clone().max_tokens;
+    let temperature: i64 = config.temperature;
 
     let mut sanitized_input: String = prompt.clone();
     sanitized_input.pop();
     sanitized_input = sanitized_input.replace("\"", "\\\"");
     let bearer = format!("Bearer {}", api_key);
     // Passing newlines behind the prompt to get a more chat-like experience.
-    let body = format!(
-        "{{\"model\": \"{}\", \"prompt\": \"{}\\n\\n\", \"max_tokens\": {}}}",
-        model,
-        sanitized_input,
-        max_tokens
-    );
+    let body = json!({
+        "model": model,
+        "prompt": format!("{}\\n\\n", sanitized_input),
+        "max_tokens": max_tokens,
+        "temperature": temperature
+    }).to_string();
     println!("{}", body);
 
     let req = Request::builder()
