@@ -73,7 +73,7 @@ async fn prompt_model(config: Config, prompt: String) -> TokioResult<String> {
     }
 }
 
-fn remove_quotation_marks(mut text: String) -> String {
+fn remove_outer_quotation_marks(mut text: String) -> String {
     text.pop();
     text.remove(0);
     text
@@ -87,7 +87,8 @@ fn remove_leading_newlines(text: String) -> String {
 fn sanitize_response(response: String) -> String {
     let mut text = response;
     text = text.replace("\\n", "\n");
-    text = remove_quotation_marks(text);
+    text = remove_outer_quotation_marks(text);
+    text = text.replace("\\\"", "\"");
     remove_leading_newlines(text)
 }
 
