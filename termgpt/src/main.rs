@@ -45,7 +45,7 @@ async fn prompt_model(config: Config, prompt: String) -> TokioResult<String> {
         "max_tokens": max_tokens,
         "temperature": temperature
     }).to_string();
-    println!("{}", body);
+    // println!("{}", body);
 
     let req = Request::builder()
         .method(Method::POST)
@@ -61,7 +61,7 @@ async fn prompt_model(config: Config, prompt: String) -> TokioResult<String> {
     let resp = client.request(req).await?;
     let body_bytes = hyper::body::to_bytes(resp.into_body()).await?;
 
-    println!("{}", String::from_utf8(body_bytes.clone().to_vec()).unwrap());
+    // println!("{}", String::from_utf8(body_bytes.clone().to_vec()).unwrap());
 
     let v: Value = serde_json::from_slice(&body_bytes)?;
     if v.get("error").is_some() {
