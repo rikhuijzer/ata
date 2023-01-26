@@ -13,9 +13,15 @@ use std::io::Read;
 use std::io::Write;
 use std::io::stdin;
 use std::io::stdout;
+use termion::raw::IntoRawMode;
 use std::path::Path;
 use std::result::Result;
 use toml::from_str;
+use termion::event::Key;
+use termion::event::MouseEvent;
+use termion::event::Event;
+use termion::input::TermRead;
+use termion::input::MouseTerminal;
 
 #[derive(Clone, Deserialize, Debug)]
 struct Config {
@@ -45,7 +51,7 @@ async fn prompt_model(config: Config, prompt: String) -> TokioResult<String> {
         "max_tokens": max_tokens,
         "temperature": temperature
     }).to_string();
-    println!("{}", body);
+    // println!("{}", body);
 
     let req = Request::builder()
         .method(Method::POST)
@@ -61,7 +67,7 @@ async fn prompt_model(config: Config, prompt: String) -> TokioResult<String> {
     let resp = client.request(req).await?;
     let body_bytes = hyper::body::to_bytes(resp.into_body()).await?;
 
-    println!("{}", String::from_utf8(body_bytes.clone().to_vec()).unwrap());
+    // println!("{}", String::from_utf8(body_bytes.clone().to_vec()).unwrap());
 
     let v: Value = serde_json::from_slice(&body_bytes)?;
     if v.get("error").is_some() {
@@ -111,15 +117,32 @@ fn main() -> TokioResult<()> {
     let config: Config = from_str(&contents).unwrap();
     // println!("{:?}", config);
 
-    loop {
-        print!("> ");
-        stdout().flush().unwrap();
+    let model: String = config.clone().model;
 
-        let mut input = String::new();
-        stdin().read_line(&mut input).unwrap();
+    let stdout = std::io::stdout();
+    let mut stdout = MouseTerminal::from(stdout.into_raw_mode().unwrap());
 
-        let response = prompt_model(config.clone(), input)?;
-        let sanitized = sanitize_response(response);
-        println!("\n{}\n", sanitized);
+    let stdin = std::io::stdin();
+
+        // print!("{}> ", model);
+        write!(stdout, "{}{}q to exit. Click, click, click!", termion::clear::All, termion::cursor::Goto(1, 1)).unwrap();
+        stdout.flush().unwrap();
+
+    for c in stdin.events() {
+        let evt = c.unwrap();
+        match evt {
+            Event::Key(Key::Char('q')) => break,
+            Event::Mouse(me) => {
+                match me {
+                    MouseEvent::Press(_, x, y) => {
+                        write!(stdout, "{}x", termion::cursor::Goto(x, y)).unwrap();
+                    },
+                    _ => (),
+                }
+            }
+            _ => {}
+        }
+        stdout.flush().unwrap();
     }
+    Ok(())
 }
