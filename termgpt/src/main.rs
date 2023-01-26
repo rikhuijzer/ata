@@ -119,30 +119,31 @@ fn main() -> TokioResult<()> {
 
     let model: String = config.clone().model;
 
-    let stdout = std::io::stdout();
-    let mut stdout = MouseTerminal::from(stdout.into_raw_mode().unwrap());
-
     let stdin = std::io::stdin();
+    let mut stdout = std::io::stdout().into_raw_mode().unwrap();
 
-        // print!("{}> ", model);
-        write!(stdout, "{}{}q to exit. Click, click, click!", termion::clear::All, termion::cursor::Goto(1, 1)).unwrap();
-        stdout.flush().unwrap();
+    write!(
+            stdout,
+            "{}{}{}{}> ",
+            termion::cursor::Show,
+            termion::cursor::Goto(1, 1),
+            termion::clear::All,
+            model
+        ).unwrap();
+    stdout.flush().unwrap();
 
-    for c in stdin.events() {
-        let evt = c.unwrap();
-        match evt {
-            Event::Key(Key::Char('q')) => break,
-            Event::Mouse(me) => {
-                match me {
-                    MouseEvent::Press(_, x, y) => {
-                        write!(stdout, "{}x", termion::cursor::Goto(x, y)).unwrap();
-                    },
-                    _ => (),
-                }
-            }
-            _ => {}
+    for c in stdin.keys() {
+        // println!("c: {:?}", c);
+        match c.unwrap() {
+            Key::Ctrl('\n') => print!("CTRL + ENTER"),
+            Key::Char('\n') => print!("\r\n"),
+            Key::Ctrl('c') => std::process::exit(0),
+            Key::Ctrl(c) => print!("CTRL + {}", c),
+            Key::Esc => std::process::exit(0),
+            c => print!("{:?}", c)
         }
         stdout.flush().unwrap();
     }
+
     Ok(())
 }
