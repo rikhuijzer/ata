@@ -96,7 +96,7 @@ fn main() -> TokioResult<()> {
     let args: Vec<String> = env::args().collect();
 
     if args.len() != 2 {
-        println!("Usage: {} <Path to termgpt.toml>", args[0]);
+        println!("Usage: {} <Path to ata.toml>", args[0]);
         return Ok(());
     }
 
