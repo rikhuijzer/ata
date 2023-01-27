@@ -5,7 +5,7 @@ Ask the Terminal Anything (ATA): OpenAI GPT in the terminal.
 At the time of writing, you can use `text-davinci-003` already which is very likely the same as ChatGPT apart from some "Chat" aspects.
 When using this as a daily driver for your searches, costs will likely stay below a dollar per day.
 
-[![asciicast](https://asciinema.org/a/553907.svg)](https://asciinema.org/a/553907)
+[![asciicast](https://asciinema.org/a/NDAG3VOKHnuDcWm1nOEMMfkWQ.svg)](https://asciinema.org/a/NDAG3VOKHnuDcWm1nOEMMfkWQ)
 
 ## Usage
 
@@ -54,7 +54,7 @@ $ cargo run ata.toml
 | Meta-Backspace    | Kill from the start of the current word, or, if between words, to the start of the previous word |
 | Meta-0, 1, ..., - | Specify the digit to the argument. `–` starts a negative argument.                               |
 
-Source: <https://github.com/kkawakam/rustyline#emacs-mode-default-mode>.
+Thanks to <https://github.com/kkawakam/rustyline#emacs-mode-default-mode>.
 
 ## Developer notes
 
