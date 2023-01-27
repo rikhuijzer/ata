@@ -1,0 +1,4 @@
+api_key = "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"
+model = "text-davinci-003"
+max_tokens = 250
+temperature = 0

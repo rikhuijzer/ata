@@ -1,6 +1,6 @@
-# termgpt
+# ata
 
-OpenAI GPT in the terminal.
+Ask the Terminal Anything (ATA): OpenAI GPT in the terminal.
 
 At the time of writing, you can use `text-davinci-003` already which is very likely the same as ChatGPT apart from some "Chat" aspects which give it a prettier appearance.
 When using this as a daily driver for your searches, costs will likely stay below a dollar per day.
@@ -10,7 +10,7 @@ When using this as a daily driver for your searches, costs will likely stay belo
 ## Usage
 
 Request an API key via <https://beta.openai.com/account/api-keys>.
-Next, set the API key, which model you want to use, and the maximum amount of tokens that the server can respond with in `termgpt.toml`:
+Next, set the API key, which model you want to use, and the maximum amount of tokens that the server can respond with in `ata.toml`:
 
 ```toml
 api_key = "<YOUR SECRET API KEY>"
@@ -22,7 +22,7 @@ temperature = 0
 and run:
 
 ```sh
-$ cargo run termgpt.toml
+$ cargo run ata.toml
 ```
 
 ## Developer notes
@@ -30,7 +30,7 @@ $ cargo run termgpt.toml
 Use:
 
 ```sh
-$ cargo watch -c -x 'run termgpt.toml'
+$ cargo watch -c -x 'run ata.toml'
 ```
 
 I've tried to use the `rustyline` and `inquire` terminal packages for Rust but they both capture CTRL + C which makes them unwieldy.
