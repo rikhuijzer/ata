@@ -10,9 +10,6 @@ use std::env;
 use std::error::Error;
 use std::fs::File;
 use std::io::Read;
-use std::io::Write;
-use std::io::stdin;
-use std::io::stdout;
 use std::path::Path;
 use std::result::Result;
 use toml::from_str;
@@ -92,6 +89,9 @@ fn sanitize_response(response: String) -> String {
     remove_leading_newlines(text)
 }
 
+use rustyline::error::ReadlineError;
+use rustyline::Editor;
+
 fn main() -> TokioResult<()> {
     let args: Vec<String> = env::args().collect();
 
@@ -101,7 +101,6 @@ fn main() -> TokioResult<()> {
     }
 
     let file = args[1].to_string();
-    // println!("Argument: {}", file);
     if !Path::new(&file).exists() {
         panic!("Couldn't find file: {}", file);
     }
@@ -112,15 +111,31 @@ fn main() -> TokioResult<()> {
     let config: Config = from_str(&contents).unwrap();
     // println!("{:?}", config);
 
+    let mut rl = Editor::<()>::new()?;
+
     loop {
-        print!("> ");
-        stdout().flush().unwrap();
-
-        let mut input = String::new();
-        stdin().read_line(&mut input).unwrap();
-
-        let response = prompt_model(config.clone(), input)?;
-        let sanitized = sanitize_response(response);
-        println!("\n{}\n", sanitized);
+        let readline = rl.readline(&format!("{}> ", config.clone().model));
+        match readline {
+            Ok(line) => {
+                if line == "" {
+                    continue
+                }
+                rl.add_history_entry(line.as_str());
+                let response = prompt_model(config.clone(), line)?;
+                let sanitized = sanitize_response(response);
+                println!("\n{}\n", sanitized);
+            },
+            Err(ReadlineError::Interrupted) => {
+                break
+            },
+            Err(ReadlineError::Eof) => {
+                break
+            },
+            Err(err) => {
+                println!("Error: {:?}", err);
+                break
+            }
+        }
     }
+    Ok(())
 }

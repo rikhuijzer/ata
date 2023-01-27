@@ -4,6 +4,7 @@ version = "0.1.0"
 edition = "2021"
 
 [dependencies]
+rustyline = "10.1"
 hyper = { version = "0.14", features = ["full"] }
 hyper-tls = { version = "0.5" }
 regex = { version = "1" }
