@@ -14,6 +14,8 @@ use std::path::Path;
 use std::result::Result;
 use toml::from_str;
 
+mod help;
+
 #[derive(Clone, Deserialize, Debug)]
 struct Config {
     api_key: String,
@@ -111,6 +113,8 @@ fn main() -> TokioResult<()> {
     let config: Config = from_str(&contents).unwrap();
     // println!("{:?}", config);
 
+    println!("Ask the Terminal Anything. Type `commands` for a list of commands.");
+
     let mut rl = Editor::<()>::new()?;
 
     loop {
@@ -118,6 +122,9 @@ fn main() -> TokioResult<()> {
         match readline {
             Ok(line) => {
                 if line == "" {
+                    continue
+                } else if line == "commands" || line == "`commands`" {
+                    help::commands();
                     continue
                 }
                 rl.add_history_entry(line.as_str());
