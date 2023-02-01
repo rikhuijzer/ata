@@ -162,3 +162,13 @@ fn main() -> TokioResult<()> {
     }
     Ok(())
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn leading_newlines() {
+        assert_eq!(remove_leading_newlines("\nfoo".to_string()), "foo");
+    }
+}

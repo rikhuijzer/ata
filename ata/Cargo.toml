@@ -13,3 +13,6 @@ serde_json = { version = "1" }
 tokio = { version = "1", features = ["full"] }
 toml = { version = "0.6" }
 clap = { version = "4.1.4", features = ["derive"] }
+
+[dev-dependencies]
+pretty_assertions = "1"
