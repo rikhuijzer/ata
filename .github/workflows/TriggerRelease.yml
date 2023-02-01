@@ -4,7 +4,7 @@ on:
   workflow_dispatch:
 
 jobs:
-  build-ubuntu:
+  tag:
     runs-on: ubuntu-latest
     timeout-minutes: 5
     permissions:
@@ -14,10 +14,20 @@ jobs:
         with:
           fetch-depth: 0
 
+      # Create a Cargo.lock file for 
+      - uses: actions-rs/toolchain@v1
+        with:
+          toolchain: stable
+          override: true
+
+      - uses: actions-rs/cargo@v1
+        with:
+          command: test
+
       - run: |
-          VERSION="$(cargo pkgid ata | cut -d "#" -f2)"
+          VERSION="$(cargo metadata --format-version=1 --no-deps | jq '.packages[0].version')"
           echo "VERSION: $VERSION"
           TAGNAME="v$VERSION"
           echo "TAGNAME: $TAGNAME"
           git tag $TAGNAME
-          git push origin $TAGNAME
+          # git push origin $TAGNAME
