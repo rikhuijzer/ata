@@ -1,3 +1,4 @@
+use clap::Parser;
 use hyper::Body;
 use hyper::Client;
 use hyper::Method;
@@ -94,21 +95,39 @@ fn sanitize_response(response: String) -> String {
 use rustyline::error::ReadlineError;
 use rustyline::Editor;
 
+fn ata_message(args: Vec<String>) {
+    panic!(
+        "Usage: `{} --config=<Path to ata.toml>` or have ata.toml in the current dir.",
+        args[0]
+    )
+}
+
+/// Ask the Terminal Anything (ATA): OpenAI GPT in the terminal.
+#[derive(Parser, Debug)]
+#[command(author, version, about, long_about = None)]
+struct Flags {
+    /// Path to the configuration TOML file.
+    #[arg(short = 'c', long = "config", default_value = "ata.toml")]
+    config: String,
+
+    /// Print the keyboard shortcuts.
+    #[arg(long)]
+    print_shortcuts: bool,
+}
+
 fn main() -> TokioResult<()> {
     let args: Vec<String> = env::args().collect();
-
-    if args.len() != 2 {
-        println!("Usage: {} <Path to ata.toml>", args[0]);
+    let flags: Flags = Flags::parse();
+    if flags.print_shortcuts {
+        help::commands();
         return Ok(());
     }
-
-    let file = args[1].to_string();
-    if !Path::new(&file).exists() {
-        panic!("Couldn't find file: {}", file);
+    let filename = flags.config;
+    if !Path::new(&filename).exists() {
+        ata_message(args);
     }
-
     let mut contents = String::new();
-    File::open(file).unwrap().read_to_string(&mut contents).unwrap();
+    File::open(filename).unwrap().read_to_string(&mut contents).unwrap();
 
     let config: Config = from_str(&contents).unwrap();
     // println!("{:?}", config);
@@ -122,9 +141,6 @@ fn main() -> TokioResult<()> {
         match readline {
             Ok(line) => {
                 if line == "" {
-                    continue
-                } else if line == "commands" || line == "`commands`" {
-                    help::commands();
                     continue
                 }
                 rl.add_history_entry(line.as_str());
