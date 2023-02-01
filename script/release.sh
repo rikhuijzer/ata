@@ -15,5 +15,9 @@ VERSION="$(echo $METADATA | jq -r '.packages[0].version')"
 echo "VERSION: $VERSION"
 TAGNAME="v$VERSION"
 echo "TAGNAME: $TAGNAME"
-git tag -a $TAGNAME -m "Tag for $TAGNAME"
-git push origin $TAGNAME
+
+read -p "Creating a new tag which will trigger a release. Are you sure? [y/N]" -n 1 -r
+if [[ $REPLY =~ ^[Yy]$ ]]; then
+    git tag -a $TAGNAME -m "Release $TAGNAME"
+    git push origin $TAGNAME
+fi
