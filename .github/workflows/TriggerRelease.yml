@@ -22,5 +22,5 @@ jobs:
           echo "TAGNAME: $TAGNAME"
           git config --global user.name github-actions
           git config --global user.email github-actions@github.com
-          git tag -a $TAGNAME
+          git tag -a $TAGNAME -m "Tag for $TAGNAME"
           git push origin $TAGNAME
