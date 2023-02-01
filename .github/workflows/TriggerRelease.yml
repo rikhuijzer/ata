@@ -14,20 +14,11 @@ jobs:
         with:
           fetch-depth: 0
 
-      # Create a Cargo.lock file for 
-      - uses: actions-rs/toolchain@v1
-        with:
-          toolchain: stable
-          override: true
-
-      - uses: actions-rs/cargo@v1
-        with:
-          command: test
-
       - run: |
-          VERSION="$(cargo metadata --format-version=1 --no-deps | jq '.packages[0].version')"
+          METADATA="$(cargo metadata --format-version=1 --no-deps)"
+          VERSION="$(echo $METADATA | jq -r '.packages[0].version')"
           echo "VERSION: $VERSION"
           TAGNAME="v$VERSION"
           echo "TAGNAME: $TAGNAME"
           git tag $TAGNAME
-          # git push origin $TAGNAME
+          git push origin $TAGNAME
