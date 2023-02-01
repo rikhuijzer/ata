@@ -13,6 +13,7 @@ on:
 jobs:
   build-ubuntu:
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     steps:
       - uses: actions/checkout@v3
 
@@ -31,6 +32,7 @@ jobs:
 
   build-macos:
     runs-on: macos-latest
+    timeout-minutes: 15
     steps:
       - uses: actions/checkout@v1
 
