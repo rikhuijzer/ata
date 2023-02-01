@@ -5,6 +5,7 @@ on:
     branches:
       - main
     tags:
+      - "*"
     paths-ignore:
       - "README.md"
       - "LICENSE"
