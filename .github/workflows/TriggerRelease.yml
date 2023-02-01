@@ -20,5 +20,5 @@ jobs:
           echo "VERSION: $VERSION"
           TAGNAME="v$VERSION"
           echo "TAGNAME: $TAGNAME"
-          git tag $TAGNAME
+          git tag -a $TAGNAME
           git push origin $TAGNAME
