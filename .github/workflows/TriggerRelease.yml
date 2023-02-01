@@ -1,0 +1,23 @@
+name: TriggerRelease
+
+on:
+  workflow_dispatch:
+
+jobs:
+  build-ubuntu:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+
+      - run: |
+          VERSION="$(cargo pkgid ata | cut -d "#" -f2)"
+          echo "VERSION: $VERSION"
+          TAGNAME="v$VERSION"
+          echo "TAGNAME: $TAGNAME"
+          git tag $TAGNAME
+          git push origin $TAGNAME
