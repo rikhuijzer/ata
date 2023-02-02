@@ -52,9 +52,11 @@ jobs:
           target: ${{ matrix.target }}
 
       - run: |
-          cargo build --release
           SRC="target/release/ata${{ steps.check.outputs.exe }}"
+          echo "SRC: $SRC"
           DST="target/release/ata-${{ matrix.target }}${{ steps.check.outputs.exe }}"
+          echo "DST: $DST"
+          cargo build --release
           strip $SRC
           mv -v $SRC $DST
           echo "dst=$DST" >> $GITHUB_OUTPUT
