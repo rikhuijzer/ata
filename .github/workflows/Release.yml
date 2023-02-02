@@ -57,7 +57,6 @@ jobs:
           DST="target/release/ata-${{ matrix.target }}${{ steps.check.outputs.ext }}"
           echo "DST: $DST"
           cargo build --release
-          strip $SRC
           mv -v $SRC $DST
           echo "dst=$DST" >> $GITHUB_OUTPUT
         id: release
