@@ -37,13 +37,13 @@ jobs:
 
       - run: |
           if [[ ${{ matrix.os }} = "windows-latest" ]]; then
-            BINARY_NAME="ata.exe"
+            EXT=".exe"
           else
-            BINARY_NAME="ata"
+            EXT=""
           fi
-          echo "BINARY_NAME: $BINARY_NAME"
-          echo "name=$BINARY_NAME" >> $GITHUB_OUTPUT
-        id: bin
+          echo "EXT: $EXT"
+          echo "ext=$EXT" >> $GITHUB_OUTPUT
+        id: check
         shell: bash
 
       - uses: actions-rs/toolchain@v1
@@ -52,14 +52,16 @@ jobs:
           target: ${{ matrix.target }}
 
       - run: |
-          NAME="${{ steps.bin.outputs.name }}"
           cargo build --release
-          strip target/release/$NAME
-          mv target/release/$NAME target/release/$NAME-${{ matrix.target }}
+          strip target/release/ata$EXT
+          mv \
+            --verbose \
+            target/release/ata${{ steps.check.outputs.ext }} \
+            target/release/ata-${{ matrix.target }}${{ steps.check.outputs.ext }}
         shell: bash
 
       - uses: softprops/action-gh-release@v1
         if: startsWith(github.ref, 'refs/tags/')
         with:
           fail_on_unmatched_files: true
-          files: target/release/${{ steps.bin.outputs.name }}-${{ matrix.target }}
+          files: target/release/ata-${{ matrix.target }}${{ steps.check.outputs.ext }}
