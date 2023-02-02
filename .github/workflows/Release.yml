@@ -19,6 +19,8 @@ jobs:
         include:
           - os: ubuntu-latest
             target: x86_64-unknown-linux-gnu
+          - os: ubuntu-latest
+            target: aarch64-unknown-linux-gnu
           - os: macos-latest
             target: x86_64-apple-darwin
           - os: windows-latest
@@ -32,18 +34,30 @@ jobs:
     steps:
       - uses: actions/checkout@v3
 
+      - run: |
+          if [[ ${{ matrix.os }} = "windows-latest" ]]; then
+            BINARY_NAME="ata.exe"
+          else
+            BINARY_NAME="ata"
+          fi
+          echo "BINARY_NAME: $BINARY_NAME"
+          echo "name=$BINARY_NAME" >> $GITHUB_OUTPUT
+        id: bin
+        shell: bash
+
       - uses: actions-rs/toolchain@v1
         with:
           toolchain: stable
           target: ${{ matrix.target }}
 
       - run: |
+          NAME="${{ steps.bin.outputs.name }}"
           cargo build --release
-          strip target/release/ata
-          mv target/release/ata target/release/ata-${{ matrix.target }}
+          strip target/release/$NAME
+          mv target/release/$NAME target/release/$NAME-${{ matrix.target }}
 
       - uses: softprops/action-gh-release@v1
         if: startsWith(github.ref, 'refs/tags/')
         with:
           fail_on_unmatched_files: true
-          files: target/release/ata-${{ matrix.target }}
+          files: target/release/${{ steps.bin.outputs.name }}-${{ matrix.target }}
