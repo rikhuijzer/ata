@@ -37,12 +37,12 @@ jobs:
 
       - run: |
           if [[ ${{ matrix.os }} = "windows-latest" ]]; then
-            BINARY_NAME="ata.exe"
+            NAME="ata.exe"
           else
-            BINARY_NAME="ata"
+            NAME="ata"
           fi
-          echo "BINARY_NAME: $BINARY_NAME"
-          echo "name=$BINARY_NAME" >> $GITHUB_OUTPUT
+          echo "Binary name: $NAME"
+          echo "name=$NAME" >> $GITHUB_OUTPUT
         id: bin
         shell: bash
 
