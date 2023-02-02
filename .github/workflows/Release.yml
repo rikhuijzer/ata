@@ -52,9 +52,9 @@ jobs:
           target: ${{ matrix.target }}
 
       - run: |
-          SRC="target/release/ata${{ steps.check.outputs.exe }}"
+          SRC="target/release/ata${{ steps.check.outputs.ext }}"
           echo "SRC: $SRC"
-          DST="target/release/ata-${{ matrix.target }}${{ steps.check.outputs.exe }}"
+          DST="target/release/ata-${{ matrix.target }}${{ steps.check.outputs.ext }}"
           echo "DST: $DST"
           cargo build --release
           strip $SRC
