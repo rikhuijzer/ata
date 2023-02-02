@@ -56,7 +56,7 @@ jobs:
           SRC="target/release/ata${{ steps.check.outputs.exe }}"
           DST="target/release/ata-${{ matrix.target }}${{ steps.check.outputs.exe }}"
           strip $SRC
-          mv --verbose $SRC $DST
+          mv -v $SRC $DST
           echo "dst=$DST" >> $GITHUB_OUTPUT
         id: release
         shell: bash
