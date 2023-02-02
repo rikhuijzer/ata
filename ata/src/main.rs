@@ -1,6 +1,11 @@
 use clap::Parser;
 use hyper::Body;
+use console::Term;
 use hyper::Client;
+use std::sync::Arc;
+use std::sync::atomic::Ordering;
+use std::sync::atomic::AtomicBool;
+use std::thread;
 use hyper::Method;
 use hyper::Request;
 use hyper::body::HttpBody;
@@ -38,8 +43,14 @@ fn sanitize_input(input: String) -> String {
     out
 }
 
+fn finish_prompt(aborted: bool) -> bool {
+    println!("\n");
+    aborted
+}
+
 #[tokio::main]
-async fn prompt_model(config: Config, prompt: String) -> TokioResult<()> {
+async fn prompt_model(abort: Arc<AtomicBool>, config: Config, prompt: String)
+        -> TokioResult<bool> {
     let api_key: String = config.clone().api_key;
     let model: String = config.clone().model;
     let max_tokens: i64 = config.clone().max_tokens;
@@ -76,8 +87,14 @@ async fn prompt_model(config: Config, prompt: String) -> TokioResult<()> {
 
     println!("");
 
+    let stdout = Term::buffered_stdout();
+
+    // Here is the solution:
+    // https://stackoverflow.com/questions/30012995
+
     let mut buffer = vec![];
     while let Some(chunk) = response.body_mut().data().await {
+
         let chunk = chunk?;
         buffer.extend_from_slice(&chunk);
 
@@ -86,19 +103,22 @@ async fn prompt_model(config: Config, prompt: String) -> TokioResult<()> {
             if event.starts_with("data:") {
                 let data = &event[6..];
                 if data == "[DONE]" {
-                    println!("\n");
-                    return Ok(());
+                    return Ok(finish_prompt(false));
                 };
                 let v: Value = serde_json::from_str(&data)?;
                 let text = v["choices"][0]["text"].as_str().unwrap();
                 print!("{}", text);
                 std::io::stdout().flush().unwrap();
             }
+            println!("{:?}", stdout.read_char());
+            if abort.load(Ordering::SeqCst) {
+                abort.store(true, Ordering::SeqCst);
+                return Ok(finish_prompt(true));
+            }
         }
         buffer.clear();
     };
-    println!("\n");
-    Ok(())
+    Ok(finish_prompt(false))
 }
 
 fn missing_toml(args: Vec<String>) {
@@ -142,18 +162,38 @@ fn main() -> TokioResult<()> {
 
     let mut rl = Editor::<()>::new()?;
 
+    let model = config.clone().model;
+
+    let abort = Arc::new(AtomicBool::new(false));
+    let abort_clone = abort.clone();
+    ctrlc::set_handler(move || {
+        println!("Canceling");
+        abort_clone.store(true, Ordering::SeqCst);
+    }).expect("Error setting Ctrl-C handler");
+
+    let mut aborted = false;
+
     loop {
-        let readline = rl.readline(&format!("{}> ", config.clone().model));
+        let abort_clone = abort.clone();
+        let readline = rl.readline(&format!("{}> ", model));
+        let config = config.clone();
         match readline {
             Ok(line) => {
                 if line == "" {
                     continue
                 }
                 rl.add_history_entry(line.as_str());
-                prompt_model(config.clone(), line)?;
+                aborted = prompt_model(abort_clone, config.clone(), line).unwrap();
+                println!("aborted after prompt: {}", aborted);
+                println!("ap: {}", abort.load(Ordering::SeqCst));
             },
             Err(ReadlineError::Interrupted) => {
-                break
+                if aborted {
+                    aborted = false;
+                    continue
+                } else {
+                    break
+                }
             },
             Err(ReadlineError::Eof) => {
                 break

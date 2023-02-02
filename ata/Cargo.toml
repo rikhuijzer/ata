@@ -4,6 +4,8 @@ version = "0.2.0"
 edition = "2021"
 
 [dependencies]
+console = "0.15"
+ctrlc = "3.2"
 rustyline = "10.1"
 hyper = { version = "0.14", features = ["full"] }
 hyper-rustls = { version = "0.23" }
