@@ -159,7 +159,7 @@ fn main() -> TokioResult<()> {
                 break
             },
             Err(err) => {
-                println!("Error: {:?}", err);
+                eprintln!("{:?}", err);
                 break
             }
         }
