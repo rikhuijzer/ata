@@ -2,7 +2,7 @@
 
 Ask the Terminal Anything (ATA): OpenAI GPT in the terminal.
 
-At the time of writing, you can use `text-davinci-003` already which is very likely the same as ChatGPT apart from some "Chat" aspects.
+At the time of writing, you can use `text-davinci-003`, which is similar to ChatGPT.
 When using this for your daily searches, costs will likely stay below a dollar per day.
 
 [![asciicast](https://asciinema.org/a/en3mUMESruzxjLtJkX3Mqi9eY.svg)](https://asciinema.org/a/en3mUMESruzxjLtJkX3Mqi9eY)
