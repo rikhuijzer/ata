@@ -3,7 +3,10 @@ use hyper::Body;
 use hyper::Client;
 use hyper::Method;
 use hyper::Request;
+use hyper::body::HttpBody;
 use hyper_rustls::HttpsConnectorBuilder;
+use rustyline::Editor;
+use rustyline::error::ReadlineError;
 use serde::Deserialize;
 use serde_json::Value;
 use serde_json::json;
@@ -11,6 +14,7 @@ use std::env;
 use std::error::Error;
 use std::fs::File;
 use std::io::Read;
+use std::io::Write;
 use std::path::Path;
 use std::result::Result;
 use toml::from_str;
@@ -27,25 +31,30 @@ struct Config {
 
 type TokioResult<T, E = Box<dyn Error + Send + Sync>> = Result<T, E>;
 
+fn sanitize_input(input: String) -> String {
+    let mut out = input.clone();
+    out.pop();
+    out = out.replace("\"", "\\\"");
+    out
+}
+
 #[tokio::main]
-async fn prompt_model(config: Config, prompt: String) -> TokioResult<String> {
+async fn prompt_model(config: Config, prompt: String) -> TokioResult<()> {
     let api_key: String = config.clone().api_key;
     let model: String = config.clone().model;
     let max_tokens: i64 = config.clone().max_tokens;
     let temperature: i64 = config.temperature;
 
-    let mut sanitized_input: String = prompt.clone();
-    sanitized_input.pop();
-    sanitized_input = sanitized_input.replace("\"", "\\\"");
+    let sanitized_input = sanitize_input(prompt.clone());
     let bearer = format!("Bearer {}", api_key);
     // Passing newlines behind the prompt to get a more chat-like experience.
     let body = json!({
         "model": model,
         "prompt": format!("{}\\n\\n", sanitized_input),
         "max_tokens": max_tokens,
-        "temperature": temperature
+        "temperature": temperature,
+        "stream": true
     }).to_string();
-    // println!("{}", body);
 
     let req = Request::builder()
         .method(Method::POST)
@@ -63,48 +72,41 @@ async fn prompt_model(config: Config, prompt: String) -> TokioResult<String> {
     let client = Client::builder()
         .build::<_, hyper::Body>(https);
 
-    let resp = client.request(req).await?;
-    let body_bytes = hyper::body::to_bytes(resp.into_body()).await?;
+    let mut response = client.request(req).await?;
 
-    // println!("{}", String::from_utf8(body_bytes.clone().to_vec()).unwrap());
+    println!("");
 
-    let v: Value = serde_json::from_slice(&body_bytes)?;
-    if v.get("error").is_some() {
-        let text: String = v["error"]["message"].to_string();
-        Ok(text)
-    } else {
-        let text: String = v["choices"][0]["text"].to_string();
-        Ok(text)
-    }
+    let mut buffer = vec![];
+    while let Some(chunk) = response.body_mut().data().await {
+        let chunk = chunk?;
+        buffer.extend_from_slice(&chunk);
+
+        let events = std::str::from_utf8(&buffer)?.split("\n\n");
+        for event in events {
+            if event.starts_with("data:") {
+                let data = &event[6..];
+                if data == "[DONE]" {
+                    println!("\n");
+                    return Ok(());
+                };
+                let v: Value = serde_json::from_str(&data)?;
+                let text = v["choices"][0]["text"].as_str().unwrap();
+                print!("{}", text);
+                std::io::stdout().flush().unwrap();
+            }
+        }
+        buffer.clear();
+    };
+    println!("\n");
+    Ok(())
 }
 
-fn remove_outer_quotation_marks(mut text: String) -> String {
-    text.pop();
-    text.remove(0);
-    text
-}
-
-fn remove_leading_newlines(text: String) -> String {
-    let re = regex::Regex::new(r"^[\n]*").unwrap();
-    re.replace_all(&text, "").into_owned()
-}
-
-fn sanitize_response(response: String) -> String {
-    let mut text = response;
-    text = text.replace("\\n", "\n");
-    text = remove_outer_quotation_marks(text);
-    text = text.replace("\\\"", "\"");
-    remove_leading_newlines(text)
-}
-
-use rustyline::error::ReadlineError;
-use rustyline::Editor;
-
-fn ata_message(args: Vec<String>) {
-    panic!(
-        "Usage: `{} --config=<Path to ata.toml>` or have ata.toml in the current dir.",
+fn missing_toml(args: Vec<String>) {
+    eprintln!(
+        "Use `{} --config=<Path to ata.toml>` or have `ata.toml` in the current dir.",
         args[0]
-    )
+    );
+    std::process::exit(1);
 }
 
 /// Ask the Terminal Anything (ATA): OpenAI GPT in the terminal
@@ -129,15 +131,14 @@ fn main() -> TokioResult<()> {
     }
     let filename = flags.config;
     if !Path::new(&filename).exists() {
-        ata_message(args);
+        missing_toml(args);
     }
     let mut contents = String::new();
     File::open(filename).unwrap().read_to_string(&mut contents).unwrap();
 
     let config: Config = from_str(&contents).unwrap();
-    // println!("{:?}", config);
 
-    println!("Ask the Terminal Anything.");
+    println!("Ask the Terminal Anything");
 
     let mut rl = Editor::<()>::new()?;
 
@@ -149,9 +150,7 @@ fn main() -> TokioResult<()> {
                     continue
                 }
                 rl.add_history_entry(line.as_str());
-                let response = prompt_model(config.clone(), line)?;
-                let sanitized = sanitize_response(response);
-                println!("\n{}\n", sanitized);
+                prompt_model(config.clone(), line)?;
             },
             Err(ReadlineError::Interrupted) => {
                 break
@@ -174,6 +173,6 @@ mod tests {
 
     #[test]
     fn leading_newlines() {
-        assert_eq!(remove_leading_newlines("\nfoo".to_string()), "foo");
+        assert_eq!(sanitize_input("foo\"bar".to_string()), "foo\\\"ba".to_string());
     }
 }

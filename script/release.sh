@@ -18,6 +18,8 @@ echo "TAGNAME: $TAGNAME"
 
 read -p "Creating a new tag which will trigger a release. Are you sure? [y/N]" -n 1 -r
 if [[ $REPLY =~ ^[Yy]$ ]]; then
-    git tag -a $TAGNAME -m "Release $TAGNAME"
+    echo ""
+    read -p 'Release notes: ' NOTES
+    git tag -a $TAGNAME -m "$NOTES"
     git push origin $TAGNAME
 fi
