@@ -3,7 +3,7 @@ use hyper::Body;
 use hyper::Client;
 use hyper::Method;
 use hyper::Request;
-use hyper_tls::HttpsConnector;
+use hyper_rustls::HttpsConnectorBuilder;
 use serde::Deserialize;
 use serde_json::Value;
 use serde_json::json;
@@ -54,7 +54,12 @@ async fn prompt_model(config: Config, prompt: String) -> TokioResult<String> {
         .header("Authorization", bearer)
         .body(Body::from(body))?;
 
-    let https = HttpsConnector::new();
+    let https = HttpsConnectorBuilder::new()
+        .with_native_roots()
+        .https_only()
+        .enable_http1()
+        .build();
+
     let client = Client::builder()
         .build::<_, hyper::Body>(https);
 
@@ -102,7 +107,7 @@ fn ata_message(args: Vec<String>) {
     )
 }
 
-/// Ask the Terminal Anything (ATA): OpenAI GPT in the terminal.
+/// Ask the Terminal Anything (ATA): OpenAI GPT in the terminal
 #[derive(Parser, Debug)]
 #[command(author, version, about, long_about = None)]
 struct Flags {
@@ -132,7 +137,7 @@ fn main() -> TokioResult<()> {
     let config: Config = from_str(&contents).unwrap();
     // println!("{:?}", config);
 
-    println!("Ask the Terminal Anything. Type `commands` for a list of commands.");
+    println!("Ask the Terminal Anything.");
 
     let mut rl = Editor::<()>::new()?;
 
