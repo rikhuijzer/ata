@@ -37,12 +37,12 @@ jobs:
 
       - run: |
           if [[ ${{ matrix.os }} = "windows-latest" ]]; then
-            NAME="ata.exe"
+            BINARY_NAME="ata.exe"
           else
-            NAME="ata"
+            BINARY_NAME="ata"
           fi
-          echo "Binary name: $NAME"
-          echo "name=$NAME" >> $GITHUB_OUTPUT
+          echo "BINARY_NAME: $BINARY_NAME"
+          echo "name=$BINARY_NAME" >> $GITHUB_OUTPUT
         id: bin
         shell: bash
 
@@ -56,6 +56,7 @@ jobs:
           cargo build --release
           strip target/release/$NAME
           mv target/release/$NAME target/release/$NAME-${{ matrix.target }}
+        shell: bash
 
       - uses: softprops/action-gh-release@v1
         if: startsWith(github.ref, 'refs/tags/')
