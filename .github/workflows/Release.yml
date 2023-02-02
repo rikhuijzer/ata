@@ -53,15 +53,16 @@ jobs:
 
       - run: |
           cargo build --release
-          strip target/release/ata$EXT
-          mv \
-            --verbose \
-            target/release/ata${{ steps.check.outputs.ext }} \
-            target/release/ata-${{ matrix.target }}${{ steps.check.outputs.ext }}
+          SRC="target/release/ata$EXT"
+          DST="target/release/ata-${{ matrix.target }}${{ steps.check.outputs.exe }}
+          strip $SRC
+          mv --verbose $SRC $DST
+          echo "dst=$DST" >> $GITHUB_OUTPUT
+        id: release
         shell: bash
 
       - uses: softprops/action-gh-release@v1
         if: startsWith(github.ref, 'refs/tags/')
         with:
           fail_on_unmatched_files: true
-          files: target/release/ata-${{ matrix.target }}${{ steps.check.outputs.ext }}
+          files: ${{ steps.release.outputs.dst }}
