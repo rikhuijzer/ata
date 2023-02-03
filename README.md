@@ -9,6 +9,8 @@ When using this for your daily searches, costs will likely stay below a dollar p
 
 ## Usage
 
+Download the binary for your system from [Releases](https://github.com/rikhuijzer/ata/releases).
+
 Request an API key via <https://beta.openai.com/account/api-keys>.
 Next, set the API key, which model you want to use, and the maximum amount of tokens that the server can respond with in `ata.toml`:
 
