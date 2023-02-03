@@ -49,25 +49,27 @@ fn sanitize_input(input: String) -> String {
     out
 }
 
-fn print_external(printer: &mut dyn ExternalPrinter, text: &str) {
+fn print_external(text: &str) {
     print!("{text}");
     std::io::stdout().flush().unwrap();
-    // printer
-    //    .print(text.to_string())
-    //    .expect("External print failure");
 }
 
-fn finish_prompt(printer: &mut dyn ExternalPrinter, model: String) {
-    print_external(printer, "\n\n");
-    print_external(printer, &format!("{model}> "));
+fn finish_prompt(is_running: Arc<AtomicBool>, model: String) {
+    is_running.store(false, Ordering::SeqCst);
+    print_external("\n\n");
+    print_external(&format!("{model}> "));
 }
 
 #[tokio::main]
 async fn prompt_model(
             printer: &mut dyn ExternalPrinter,
+            abort: Arc<AtomicBool>,
+            is_running: Arc<AtomicBool>,
             config: &Config,
             prompt: String
         ) -> TokioResult<()> {
+    is_running.store(true, Ordering::SeqCst);
+
     let api_key: String = config.clone().api_key;
     let model: String = config.clone().model;
     let max_tokens: i64 = config.clone().max_tokens;
@@ -102,7 +104,7 @@ async fn prompt_model(
 
     let mut response = client.request(req).await?;
 
-    print_external(printer, "\n");
+    print_external("\n");
 
     let mut buffer = vec![];
     while let Some(chunk) = response.body_mut().data().await {
@@ -115,16 +117,20 @@ async fn prompt_model(
             if event.starts_with("data:") {
                 let data = &event[6..];
                 if data == "[DONE]" {
-                    return Ok(finish_prompt(printer, model));
+                    return Ok(finish_prompt(is_running, model));
                 };
                 let v: Value = serde_json::from_str(&data)?;
                 let text = v["choices"][0]["text"].as_str().unwrap();
-                print_external(printer, text);
+                print_external(text);
+            }
+            if abort.load(Ordering::SeqCst) {
+                abort.store(false, Ordering::SeqCst);
+                return Ok(finish_prompt(is_running, model));
             }
         }
         buffer.clear();
     };
-    Ok(finish_prompt(printer, model))
+    Ok(finish_prompt(is_running, model))
 }
 
 fn missing_toml(args: Vec<String>) {
@@ -170,14 +176,25 @@ fn main() -> TokioResult<()> {
 
     let mut printer = rl.create_external_printer()?;
     let (tx, rx): (Sender<String>, Receiver<String>) = mpsc::channel();
-    let is_printing = Arc::new(AtomicBool::new(false));
+    let is_running = Arc::new(AtomicBool::new(false));
+    let is_running_clone = is_running.clone();
+    let abort = Arc::new(AtomicBool::new(false));
+    let abort_clone = abort.clone();
     let config_clone = config.clone();
     thread::spawn(move || {
+        let abort = abort_clone.clone();
+        let is_running = is_running.clone();
         loop {
             let msg: Result<String, _> = rx.recv();
             match msg {
                 Ok(line) => {
-                    prompt_model(&mut printer, &config_clone, line).unwrap();
+                    prompt_model(
+                        &mut printer,
+                        abort.clone(),
+                        is_running.clone(),
+                        &config_clone,
+                        line
+                    ).unwrap();
                 },
                 Err(_) => {}
             }
@@ -191,7 +208,6 @@ fn main() -> TokioResult<()> {
     let mut prompt_text = format!("{model}> ");
 
     loop {
-        let is_printing = is_printing.clone();
         let readline = rl.readline(&prompt_text);
         prompt_text = "".to_string();
         let config = config.clone();
@@ -201,12 +217,11 @@ fn main() -> TokioResult<()> {
                     continue
                 }
                 rl.add_history_entry(line.as_str());
-                tx.send(line);
+                tx.send(line).unwrap();
             },
             Err(ReadlineError::Interrupted) => {
-                if aborted {
-                    aborted = false;
-                    continue
+                if is_running_clone.load(Ordering::SeqCst) {
+                    abort.store(true, Ordering::SeqCst);
                 } else {
                     break
                 }
