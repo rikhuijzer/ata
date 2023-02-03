@@ -41,6 +41,36 @@ fn finish_prompt(is_running: Arc<AtomicBool>) {
     print_prompt();
 }
 
+fn store_and_do_nothing(print_buffer: &mut Vec<String>, text: &str) -> String {
+    print_buffer.push(text.to_string());
+    "".to_string()
+}
+
+fn join_and_clear(print_buffer: &mut Vec<String>, text: &str) -> String {
+    let from_buffer = print_buffer.join("");
+    print_buffer.clear();
+    let joined = format!("{from_buffer}{text}");
+    let with_real_newlines = joined.replace("\\n", "\n");
+    with_real_newlines
+}
+
+// Fixes cases where the model returns ["\", "n"] instead of ["\n"],
+// which is interpreted as a newline in the OpenAI playground.
+fn fix_newlines(print_buffer: &mut Vec<String>, text: &str) -> String {
+    let single_backslash = r#"\"#;
+    if text.ends_with(single_backslash) {
+        return store_and_do_nothing(print_buffer, text);
+    }
+    if 0 < print_buffer.len() {
+        return join_and_clear(print_buffer, text);
+    }
+    text.to_string()
+}
+
+fn post_process(print_buffer: &mut Vec<String>, text: &str) -> String {
+    fix_newlines(print_buffer, text)
+}
+
 #[tokio::main]
 pub async fn request(
             abort: Arc<AtomicBool>,
@@ -88,13 +118,14 @@ pub async fn request(
     print_and_flush("\n");
     print_response();
 
-    let mut buffer = vec![];
+    let mut data_buffer = vec![];
+    let mut print_buffer: Vec<String> = vec![];
     while let Some(chunk) = response.body_mut().data().await {
 
         let chunk = chunk?;
-        buffer.extend_from_slice(&chunk);
+        data_buffer.extend_from_slice(&chunk);
 
-        let events = std::str::from_utf8(&buffer)?.split("\n\n");
+        let events = std::str::from_utf8(&data_buffer)?.split("\n\n");
         for event in events {
             if event.starts_with("data:") {
                 let data = &event[6..];
@@ -102,15 +133,16 @@ pub async fn request(
                     return Ok(finish_prompt(is_running));
                 };
                 let v: Value = serde_json::from_str(&data)?;
-                let text = v["choices"][0]["text"].as_str().unwrap();
-                print_and_flush(text);
+                let text: &str = v["choices"][0]["text"].as_str().unwrap();
+                let processed = post_process(&mut print_buffer, text);
+                print_and_flush(&processed);
             }
             if abort.load(Ordering::SeqCst) {
                 abort.store(false, Ordering::SeqCst);
                 return Ok(finish_prompt(is_running));
             }
         }
-        buffer.clear();
+        data_buffer.clear();
     };
     Ok(finish_prompt(is_running))
 }
