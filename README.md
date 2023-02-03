@@ -12,12 +12,12 @@ When using this for your daily searches, costs will likely stay below a dollar p
 Download the binary for your system from [Releases](https://github.com/rikhuijzer/ata/releases).
 
 Request an API key via <https://beta.openai.com/account/api-keys>.
-Next, set the API key, which model you want to use, and the maximum amount of tokens that the server can respond with in `ata.toml`:
+Next, set the API key, the model that you want to use, and the maximum amount of tokens that the server can respond with in `ata.toml`:
 
 ```toml
 api_key = "<YOUR SECRET API KEY>"
 model = "text-davinci-003"
-max_tokens = 250
+max_tokens = 500
 temperature = 0
 ```
 
