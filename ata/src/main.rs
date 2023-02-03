@@ -1,11 +1,17 @@
 use clap::Parser;
 use hyper::Body;
 use console::Term;
+use rustyline::ExternalPrinter;
 use hyper::Client;
 use std::sync::Arc;
 use std::sync::atomic::Ordering;
 use std::sync::atomic::AtomicBool;
+use std::sync::mpsc;
+use std::sync::mpsc::Receiver;
+use std::sync::mpsc::RecvError;
+use std::sync::mpsc::Sender;
 use std::thread;
+use std::time::Duration;
 use hyper::Method;
 use hyper::Request;
 use hyper::body::HttpBody;
@@ -43,14 +49,25 @@ fn sanitize_input(input: String) -> String {
     out
 }
 
-fn finish_prompt(aborted: bool) -> bool {
-    println!("\n");
-    aborted
+fn print_external(printer: &mut dyn ExternalPrinter, text: &str) {
+    print!("{text}");
+    std::io::stdout().flush().unwrap();
+    // printer
+    //    .print(text.to_string())
+    //    .expect("External print failure");
+}
+
+fn finish_prompt(printer: &mut dyn ExternalPrinter, model: String) {
+    print_external(printer, "\n\n");
+    print_external(printer, &format!("{model}> "));
 }
 
 #[tokio::main]
-async fn prompt_model(abort: Arc<AtomicBool>, config: Config, prompt: String)
-        -> TokioResult<bool> {
+async fn prompt_model(
+            printer: &mut dyn ExternalPrinter,
+            config: &Config,
+            prompt: String
+        ) -> TokioResult<()> {
     let api_key: String = config.clone().api_key;
     let model: String = config.clone().model;
     let max_tokens: i64 = config.clone().max_tokens;
@@ -85,12 +102,7 @@ async fn prompt_model(abort: Arc<AtomicBool>, config: Config, prompt: String)
 
     let mut response = client.request(req).await?;
 
-    println!("");
-
-    let stdout = Term::buffered_stdout();
-
-    // Here is the solution:
-    // https://stackoverflow.com/questions/30012995
+    print_external(printer, "\n");
 
     let mut buffer = vec![];
     while let Some(chunk) = response.body_mut().data().await {
@@ -103,22 +115,16 @@ async fn prompt_model(abort: Arc<AtomicBool>, config: Config, prompt: String)
             if event.starts_with("data:") {
                 let data = &event[6..];
                 if data == "[DONE]" {
-                    return Ok(finish_prompt(false));
+                    return Ok(finish_prompt(printer, model));
                 };
                 let v: Value = serde_json::from_str(&data)?;
                 let text = v["choices"][0]["text"].as_str().unwrap();
-                print!("{}", text);
-                std::io::stdout().flush().unwrap();
-            }
-            println!("{:?}", stdout.read_char());
-            if abort.load(Ordering::SeqCst) {
-                abort.store(true, Ordering::SeqCst);
-                return Ok(finish_prompt(true));
+                print_external(printer, text);
             }
         }
         buffer.clear();
     };
-    Ok(finish_prompt(false))
+    Ok(finish_prompt(printer, model))
 }
 
 fn missing_toml(args: Vec<String>) {
@@ -162,20 +168,32 @@ fn main() -> TokioResult<()> {
 
     let mut rl = Editor::<()>::new()?;
 
-    let model = config.clone().model;
+    let mut printer = rl.create_external_printer()?;
+    let (tx, rx): (Sender<String>, Receiver<String>) = mpsc::channel();
+    let is_printing = Arc::new(AtomicBool::new(false));
+    let config_clone = config.clone();
+    thread::spawn(move || {
+        loop {
+            let msg: Result<String, _> = rx.recv();
+            match msg {
+                Ok(line) => {
+                    prompt_model(&mut printer, &config_clone, line).unwrap();
+                },
+                Err(_) => {}
+            }
+        }
+    });
 
-    let abort = Arc::new(AtomicBool::new(false));
-    let abort_clone = abort.clone();
-    ctrlc::set_handler(move || {
-        println!("Canceling");
-        abort_clone.store(true, Ordering::SeqCst);
-    }).expect("Error setting Ctrl-C handler");
+    let model = config.clone().model;
 
     let mut aborted = false;
 
+    let mut prompt_text = format!("{model}> ");
+
     loop {
-        let abort_clone = abort.clone();
-        let readline = rl.readline(&format!("{}> ", model));
+        let is_printing = is_printing.clone();
+        let readline = rl.readline(&prompt_text);
+        prompt_text = "".to_string();
         let config = config.clone();
         match readline {
             Ok(line) => {
@@ -183,9 +201,7 @@ fn main() -> TokioResult<()> {
                     continue
                 }
                 rl.add_history_entry(line.as_str());
-                aborted = prompt_model(abort_clone, config.clone(), line).unwrap();
-                println!("aborted after prompt: {}", aborted);
-                println!("ap: {}", abort.load(Ordering::SeqCst));
+                tx.send(line);
             },
             Err(ReadlineError::Interrupted) => {
                 if aborted {
