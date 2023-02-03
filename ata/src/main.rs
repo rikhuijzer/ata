@@ -54,10 +54,18 @@ fn print_external(text: &str) {
     std::io::stdout().flush().unwrap();
 }
 
+fn print_prompt() {
+    println!("\x1b[1mPrompt: \x1b[0m");
+}
+
+fn print_response() {
+    println!("\x1b[1mResponse: \x1b[0m");
+}
+
 fn finish_prompt(is_running: Arc<AtomicBool>, model: String) {
     is_running.store(false, Ordering::SeqCst);
     print_external("\n\n");
-    print_external(&format!("{model}> "));
+    print_prompt();
 }
 
 #[tokio::main]
@@ -105,6 +113,7 @@ async fn prompt_model(
     let mut response = client.request(req).await?;
 
     print_external("\n");
+    print_response();
 
     let mut buffer = vec![];
     while let Some(chunk) = response.body_mut().data().await {
@@ -170,7 +179,8 @@ fn main() -> TokioResult<()> {
 
     let config: Config = from_str(&contents).unwrap();
 
-    println!("Ask the Terminal Anything");
+    let model = config.clone().model;
+    println!("Ask the Terminal Anything ({model})");
 
     let mut rl = Editor::<()>::new()?;
 
@@ -201,18 +211,20 @@ fn main() -> TokioResult<()> {
         }
     });
 
-    let model = config.clone().model;
-
-    let mut aborted = false;
-
-    let mut prompt_text = format!("{model}> ");
+    print_prompt();
 
     loop {
-        let readline = rl.readline(&prompt_text);
-        prompt_text = "".to_string();
+        // Using an empty prompt text because otherwise the user would
+        // "see" that the prompt is ready again.
+        // Also, the current readline is cleared in some cases by rustyline,
+        // so being on a newline is the only way to avoid that.
+        let readline = rl.readline("");
         let config = config.clone();
         match readline {
             Ok(line) => {
+                if is_running_clone.load(Ordering::SeqCst) {
+                    abort.store(true, Ordering::SeqCst);
+                }
                 if line == "" {
                     continue
                 }
