@@ -1,17 +1,6 @@
 use clap::Parser;
 use hyper::Body;
-use console::Term;
-use rustyline::ExternalPrinter;
 use hyper::Client;
-use std::sync::Arc;
-use std::sync::atomic::Ordering;
-use std::sync::atomic::AtomicBool;
-use std::sync::mpsc;
-use std::sync::mpsc::Receiver;
-use std::sync::mpsc::RecvError;
-use std::sync::mpsc::Sender;
-use std::thread;
-use std::time::Duration;
 use hyper::Method;
 use hyper::Request;
 use hyper::body::HttpBody;
@@ -28,6 +17,13 @@ use std::io::Read;
 use std::io::Write;
 use std::path::Path;
 use std::result::Result;
+use std::sync::Arc;
+use std::sync::atomic::AtomicBool;
+use std::sync::atomic::Ordering;
+use std::sync::mpsc::Receiver;
+use std::sync::mpsc::Sender;
+use std::sync::mpsc;
+use std::thread;
 use toml::from_str;
 
 mod help;
@@ -49,7 +45,7 @@ fn sanitize_input(input: String) -> String {
     out
 }
 
-fn print_external(text: &str) {
+fn print_and_flush(text: &str) {
     print!("{text}");
     std::io::stdout().flush().unwrap();
 }
@@ -62,20 +58,20 @@ fn print_response() {
     println!("\x1b[1mResponse: \x1b[0m");
 }
 
-fn finish_prompt(is_running: Arc<AtomicBool>, model: String) {
+fn finish_prompt(is_running: Arc<AtomicBool>) {
     is_running.store(false, Ordering::SeqCst);
-    print_external("\n\n");
+    print_and_flush("\n\n");
     print_prompt();
 }
 
 #[tokio::main]
 async fn prompt_model(
-            printer: &mut dyn ExternalPrinter,
             abort: Arc<AtomicBool>,
             is_running: Arc<AtomicBool>,
             config: &Config,
             prompt: String
         ) -> TokioResult<()> {
+
     is_running.store(true, Ordering::SeqCst);
 
     let api_key: String = config.clone().api_key;
@@ -112,7 +108,7 @@ async fn prompt_model(
 
     let mut response = client.request(req).await?;
 
-    print_external("\n");
+    print_and_flush("\n");
     print_response();
 
     let mut buffer = vec![];
@@ -126,28 +122,20 @@ async fn prompt_model(
             if event.starts_with("data:") {
                 let data = &event[6..];
                 if data == "[DONE]" {
-                    return Ok(finish_prompt(is_running, model));
+                    return Ok(finish_prompt(is_running));
                 };
                 let v: Value = serde_json::from_str(&data)?;
                 let text = v["choices"][0]["text"].as_str().unwrap();
-                print_external(text);
+                print_and_flush(text);
             }
             if abort.load(Ordering::SeqCst) {
                 abort.store(false, Ordering::SeqCst);
-                return Ok(finish_prompt(is_running, model));
+                return Ok(finish_prompt(is_running));
             }
         }
         buffer.clear();
     };
-    Ok(finish_prompt(is_running, model))
-}
-
-fn missing_toml(args: Vec<String>) {
-    eprintln!(
-        "Use `{} --config=<Path to ata.toml>` or have `ata.toml` in the current dir.",
-        args[0]
-    );
-    std::process::exit(1);
+    Ok(finish_prompt(is_running))
 }
 
 /// Ask the Terminal Anything (ATA): OpenAI GPT in the terminal
@@ -172,7 +160,7 @@ fn main() -> TokioResult<()> {
     }
     let filename = flags.config;
     if !Path::new(&filename).exists() {
-        missing_toml(args);
+        help::missing_toml(args);
     }
     let mut contents = String::new();
     File::open(filename).unwrap().read_to_string(&mut contents).unwrap();
@@ -184,7 +172,6 @@ fn main() -> TokioResult<()> {
 
     let mut rl = Editor::<()>::new()?;
 
-    let mut printer = rl.create_external_printer()?;
     let (tx, rx): (Sender<String>, Receiver<String>) = mpsc::channel();
     let is_running = Arc::new(AtomicBool::new(false));
     let is_running_clone = is_running.clone();
@@ -199,7 +186,6 @@ fn main() -> TokioResult<()> {
             match msg {
                 Ok(line) => {
                     prompt_model(
-                        &mut printer,
                         abort.clone(),
                         is_running.clone(),
                         &config_clone,
@@ -215,11 +201,10 @@ fn main() -> TokioResult<()> {
 
     loop {
         // Using an empty prompt text because otherwise the user would
-        // "see" that the prompt is ready again.
+        // "see" that the prompt is ready again during response printing.
         // Also, the current readline is cleared in some cases by rustyline,
         // so being on a newline is the only way to avoid that.
         let readline = rl.readline("");
-        let config = config.clone();
         match readline {
             Ok(line) => {
                 if is_running_clone.load(Ordering::SeqCst) {
