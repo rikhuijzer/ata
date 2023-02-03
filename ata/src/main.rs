@@ -35,6 +35,10 @@ struct Flags {
     #[arg(short = 'c', long = "config", default_value = "ata.toml")]
     config: String,
 
+    /// Avoid printing the configuration to stdout.
+    #[arg(long)]
+    hide_config: bool,
+
     /// Print the keyboard shortcuts.
     #[arg(long)]
     print_shortcuts: bool,
@@ -57,7 +61,17 @@ fn main() -> prompt::TokioResult<()> {
     let config: Config = from_str(&contents).unwrap();
 
     let model = config.clone().model;
-    println!("Ask the Terminal Anything ({model})");
+    let max_tokens = config.clone().max_tokens;
+    let temperature = config.clone().temperature;
+    println!("Ask the Terminal Anything");
+
+    if !flags.hide_config {
+        println!("");
+        println!("model: {model}");
+        println!("max_tokens: {max_tokens}");
+        println!("temperature: {temperature}");
+        println!("");
+    }
 
     let mut rl = Editor::<()>::new()?;
 

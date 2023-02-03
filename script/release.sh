@@ -16,10 +16,11 @@ echo "VERSION: $VERSION"
 TAGNAME="v$VERSION"
 echo "TAGNAME: $TAGNAME"
 
-read -p "Creating a new tag which will trigger a release. Are you sure? [y/N]" -n 1 -r
+read -p 'Release notes, which will not trigger a release yet: ' NOTES
+
+read -p "Creating a new tag, which WILL TRIGGER A RELEASE with the following release notes: \"$NOTES\". Are you sure? [y/N]" -n 1 -r
 if [[ $REPLY =~ ^[Yy]$ ]]; then
     echo ""
-    read -p 'Release notes: ' NOTES
     git tag -a $TAGNAME -m "$NOTES"
     git push origin $TAGNAME
 fi
