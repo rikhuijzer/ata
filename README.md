@@ -3,9 +3,16 @@
 Ask the Terminal Anything (ATA): OpenAI GPT in the terminal.
 
 At the time of writing, you can use `text-davinci-003`, which is similar to ChatGPT.
-When using this for your daily searches, costs will likely stay below a dollar per day.
+When using this for your daily work, costs will likely be around $0.20 per day.
 
 [![asciicast](https://asciinema.org/a/557270.svg)](https://asciinema.org/a/557270)
+
+## Productivity benefits
+
+- The terminal starts more quickly and requires **less resources** than a browser.
+- A terminal can be set to **run in the background and show/hide with one keypress**. To do this, use iTerm2 (Mac), Guake (Ubuntu), or scratchpad (i3), or the quake mode for Windows Terminal.
+- The **keyboard shortcuts** allow for quick interaction with the query. For example, press `CTRL + c` to cancel the stream, `CTRL + ↑` to get the previous query again, and `CTRL + w` to remove the last word.
+- The prompts are **reproducible** because each prompt is sent as a stand-alone prompt without history. Tweaking the prompt can be done by pressing `CTRL + ↑` and making changes.
 
 ## Usage
 
