@@ -49,5 +49,5 @@ $ ata --help
 
 **How much will I have to pay for the API?**
 
-Using OpenAI's API is quite cheap, I have been using this terminal application heavily for a few weeks now and my costs are about $0.15 per day.
-The first $18.00 for free, so you can use it for about 120 days before having to pay.
+Using OpenAI's API is quite cheap, I have been using this terminal application heavily for a few weeks now and my costs are about $0.15 per day ($4.50 per month).
+The first $18.00 for free, so you can use it for about 120 days (4 months) before having to pay.
