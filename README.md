@@ -3,7 +3,6 @@
 Ask the Terminal Anything (ATA): OpenAI GPT in the terminal.
 
 At the time of writing, you can use `text-davinci-003`, which is similar to ChatGPT.
-When using this for your daily work, costs will likely be around $0.20 per day.
 
 [![asciicast](https://asciinema.org/a/557270.svg)](https://asciinema.org/a/557270)
 
@@ -45,3 +44,9 @@ For more information, see:
 ```sh
 $ ata --help
 ```
+
+## FAQ
+
+**How much will I have to pay for the API?**
+Using OpenAI's API is quite cheap, I have been using this terminal application heavily for a few weeks now and my costs are about $0.15 per day.
+The first $18.00 for free, so you can use it for about 120 days before having to pay.
