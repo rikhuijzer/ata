@@ -125,8 +125,7 @@ pub async fn request(
     let mut response = match client.request(req).await {
         Ok(response) => response,
         Err(e) => {
-            eprintln!("{e}");
-            return Ok(finish_prompt(is_running));
+            return Ok(print_error(is_running, &e.to_string()));
         }
     };
 
