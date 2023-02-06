@@ -122,17 +122,16 @@ pub async fn request(
     let client = Client::builder()
         .build::<_, hyper::Body>(https);
 
+    print_and_flush("\n");
+
     let mut response = match client.request(req).await {
         Ok(response) => response,
         Err(e) => {
-            let msg = format!("\n{e:?}");
-            return Ok(print_error(is_running, &msg));
+            return Ok(print_error(is_running, &e.to_string()));
         }
     };
 
-    print_and_flush("\n");
     let mut had_first_success = false;
-
     let mut data_buffer = vec![];
     let mut print_buffer: Vec<String> = vec![];
     while let Some(chunk) = response.body_mut().data().await {
