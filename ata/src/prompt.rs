@@ -93,7 +93,7 @@ pub async fn request(
     let api_key: String = config.clone().api_key;
     let model: String = config.clone().model;
     let max_tokens: i64 = config.clone().max_tokens;
-    let temperature: i64 = config.temperature;
+    let temperature: f64 = config.temperature;
 
     let sanitized_input = sanitize_input(prompt.clone());
     let bearer = format!("Bearer {}", api_key);
@@ -122,14 +122,16 @@ pub async fn request(
     let client = Client::builder()
         .build::<_, hyper::Body>(https);
 
-    print_and_flush("\n");
-
     let mut response = match client.request(req).await {
         Ok(response) => response,
         Err(e) => {
+            print_and_flush("\n");
             return Ok(print_error(is_running, &e.to_string()));
         }
     };
+
+    // Do not move this in front of the request for UX reasons.
+    print_and_flush("\n");
 
     let mut had_first_success = false;
     let mut data_buffer = vec![];
