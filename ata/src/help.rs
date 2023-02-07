@@ -40,7 +40,7 @@ For example, make a new file `ata.toml` in the current directory with the follow
 api_key = "<YOUR SECRET API KEY>"
 model = "text-davinci-003"
 max_tokens = 400
-temperature = 0
+temperature = 0.0
 ```
 
 Here, replace `<YOUR SECRET API KEY>` with your API key, which you can request via https://beta.openai.com/account/api-keys.

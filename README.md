@@ -32,7 +32,7 @@ Next, set the API key, the model that you want to use, and the maximum amount of
 api_key = "<YOUR SECRET API KEY>"
 model = "text-davinci-003"
 max_tokens = 500
-temperature = 0
+temperature = 0.0
 ```
 
 and run:
