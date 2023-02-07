@@ -24,7 +24,7 @@ pub struct Config {
     api_key: String,
     model: String,
     max_tokens: i64,
-    temperature: i64
+    temperature: f64
 }
 
 /// Ask the Terminal Anything (ATA): OpenAI GPT in the terminal
