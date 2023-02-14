@@ -16,10 +16,9 @@ use std::sync::atomic::Ordering;
 pub type TokioResult<T, E = Box<dyn Error + Send + Sync>> = Result<T, E>;
 
 fn sanitize_input(input: String) -> String {
-    let mut out = input.clone();
+    let mut out = input;
     out.pop();
-    out = out.replace("\"", "\\\"");
-    out
+    out.replace('"', "\\\"")
 }
 
 fn print_and_flush(text: &str) {
@@ -55,8 +54,7 @@ fn join_and_clear(print_buffer: &mut Vec<String>, text: &str) -> String {
     let from_buffer = print_buffer.join("");
     print_buffer.clear();
     let joined = format!("{from_buffer}{text}");
-    let with_real_newlines = joined.replace("\\n", "\n");
-    with_real_newlines
+    joined.replace("\\n", "\n")
 }
 
 // Fixes cases where the model returns ["\", "n"] instead of ["\n"],
@@ -66,7 +64,7 @@ fn fix_newlines(print_buffer: &mut Vec<String>, text: &str) -> String {
     if text.ends_with(single_backslash) {
         return store_and_do_nothing(print_buffer, text);
     }
-    if 0 < print_buffer.len() {
+    if !print_buffer.is_empty() {
         return join_and_clear(print_buffer, text);
     }
     text.to_string()
@@ -96,11 +94,11 @@ pub async fn request(
     let temperature: f64 = config.temperature;
 
     let sanitized_input = sanitize_input(prompt.clone());
-    let bearer = format!("Bearer {}", api_key);
+    let bearer = format!("Bearer {api_key}");
     // Passing newlines behind the prompt to get a more chat-like experience.
     let body = json!({
         "model": model,
-        "prompt": format!("{}\\n\\n", sanitized_input),
+        "prompt": format!("{sanitized_input}\\n\\n"),
         "max_tokens": max_tokens,
         "temperature": temperature,
         "stream": true
@@ -126,7 +124,8 @@ pub async fn request(
         Ok(response) => response,
         Err(e) => {
             print_and_flush("\n");
-            return Ok(print_error(is_running, &e.to_string()));
+            print_error(is_running, &e.to_string());
+            return Ok(());
         }
     };
 
@@ -145,9 +144,10 @@ pub async fn request(
             if line.starts_with("data:") {
                 let data: &str = &line[6..];
                 if data == "[DONE]" {
-                    return Ok(finish_prompt(is_running));
+                    finish_prompt(is_running);
+                    return Ok(());
                 };
-                let v: Value = serde_json::from_str(&data)?;
+                let v: Value = serde_json::from_str(data)?;
 
                 if v.get("choices").is_some() {
                     let text = value2unquoted_text(&v["choices"][0]["text"]);
@@ -159,22 +159,26 @@ pub async fn request(
                     print_and_flush(&processed);
                 } else if v.get("error").is_some() {
                     let msg = value2unquoted_text(&v["error"]["message"]);
-                    return Ok(print_error(is_running, &msg));
+                    print_error(is_running, &msg);
+                    return Ok(());
                 } else {
-                    return Ok(print_error(is_running, data));
+                    print_error(is_running, data);
+                    return Ok(());
                 };
-            } else if line == "" {
-            } else {
-                return Ok(print_error(is_running, line));
+            } else if !line.is_empty() {
+                print_error(is_running, line);
+                return Ok(());
             };
             if abort.load(Ordering::SeqCst) {
                 abort.store(false, Ordering::SeqCst);
-                return Ok(finish_prompt(is_running));
+                finish_prompt(is_running);
+                return Ok(());
             };
         }
         data_buffer.clear();
     };
-    Ok(finish_prompt(is_running))
+    finish_prompt(is_running);
+    Ok(())
 }
 
 #[cfg(test)]
