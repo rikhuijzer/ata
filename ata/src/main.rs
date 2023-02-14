@@ -1,4 +1,8 @@
+mod help;
+mod prompt;
+
 use clap::Parser;
+use crate::prompt::print_error;
 use rustyline::Editor;
 use rustyline::error::ReadlineError;
 use serde::Deserialize;
@@ -14,10 +18,8 @@ use std::sync::mpsc::Receiver;
 use std::sync::mpsc::Sender;
 use std::sync::mpsc;
 use std::thread;
+use std::time::Duration;
 use toml::from_str;
-
-mod help;
-mod prompt;
 
 #[derive(Clone, Deserialize, Debug)]
 pub struct Config {
@@ -61,16 +63,16 @@ fn main() -> prompt::TokioResult<()> {
     let config: Config = from_str(&contents).unwrap();
 
     let model = config.clone().model;
-    let max_tokens = config.clone().max_tokens;
-    let temperature = config.clone().temperature;
+    let max_tokens = config.max_tokens;
+    let temperature = config.temperature;
     println!("Ask the Terminal Anything");
 
     if !flags.hide_config {
-        println!("");
+        println!();
         println!("model: {model}");
         println!("max_tokens: {max_tokens}");
         println!("temperature: {temperature}");
-        println!("");
+        println!();
     }
 
     let mut rl = Editor::<()>::new()?;
@@ -80,22 +82,38 @@ fn main() -> prompt::TokioResult<()> {
     let is_running_clone = is_running.clone();
     let abort = Arc::new(AtomicBool::new(false));
     let abort_clone = abort.clone();
-    let config_clone = config.clone();
     thread::spawn(move || {
         let abort = abort_clone.clone();
         let is_running = is_running.clone();
         loop {
             let msg: Result<String, _> = rx.recv();
-            match msg {
-                Ok(line) => {
-                    prompt::request(
+            if let Ok(line) = msg {
+                let mut retry = true;
+                let mut count = 1;
+                while retry {
+                    let result = prompt::request(
                         abort.clone(),
                         is_running.clone(),
-                        &config_clone,
-                        line
-                    ).unwrap();
-                },
-                Err(_) => {}
+                        &config,
+                        line.to_string(),
+                        count
+                    );
+                    retry = match result {
+                        Ok(retry) => retry,
+                        Err(e) => {
+                            eprintln!();
+                            eprintln!();
+                            let msg = format!("prompt::request failed with: {e}");
+                            print_error(is_running.clone(), &msg);
+                            false
+                        }
+                    };
+                    count += 1;
+                    if retry {
+                        let duration = Duration::from_millis(500);
+                        thread::sleep(duration);
+                    }
+                }
             }
         }
     });
@@ -113,7 +131,7 @@ fn main() -> prompt::TokioResult<()> {
                 if is_running_clone.load(Ordering::SeqCst) {
                     abort.store(true, Ordering::SeqCst);
                 }
-                if line == "" {
+                if line.is_empty() {
                     continue
                 }
                 rl.add_history_entry(line.as_str());
@@ -130,7 +148,7 @@ fn main() -> prompt::TokioResult<()> {
                 break
             },
             Err(err) => {
-                eprintln!("{:?}", err);
+                eprintln!("{err:?}");
                 break
             }
         }
