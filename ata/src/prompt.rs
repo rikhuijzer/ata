@@ -40,7 +40,7 @@ fn finish_prompt(is_running: Arc<AtomicBool>) {
     print_prompt();
 }
 
-fn print_error(is_running: Arc<AtomicBool>, msg: &str) {
+pub fn print_error(is_running: Arc<AtomicBool>, msg: &str) {
     eprintln!("\x1b[1mError: \x1b[0m \n{msg}");
     finish_prompt(is_running)
 }
@@ -85,8 +85,14 @@ fn should_retry(line: &str, count: i64) -> bool {
     };
     if v.get("error").is_some() {
         let error_type = value2unquoted_text(&v["error"]["type"]);
-        if count < 3 && error_type == "server_error" {
-            println!("Server responded with a `server_error`. Trying again...");
+        let max_tries = 3;
+        if count < max_tries && error_type == "server_error" {
+            println!(
+                "\
+                Server responded with a `server_error`. \
+                Trying again... ({count}/{max_tries})\
+                "
+            );
             return true;
         }
     }

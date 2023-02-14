@@ -1,4 +1,8 @@
+mod help;
+mod prompt;
+
 use clap::Parser;
+use crate::prompt::print_error;
 use rustyline::Editor;
 use rustyline::error::ReadlineError;
 use serde::Deserialize;
@@ -16,9 +20,6 @@ use std::sync::mpsc;
 use std::thread;
 use std::time::Duration;
 use toml::from_str;
-
-mod help;
-mod prompt;
 
 #[derive(Clone, Deserialize, Debug)]
 pub struct Config {
@@ -88,16 +89,26 @@ fn main() -> prompt::TokioResult<()> {
             let msg: Result<String, _> = rx.recv();
             if let Ok(line) = msg {
                 let mut retry = true;
-                let mut count = 0;
+                let mut count = 1;
                 while retry {
-                    retry = prompt::request(
-                            abort.clone(),
-                            is_running.clone(),
-                            &config,
-                            line.to_string(),
-                            count
-                        ).unwrap();
-                    count = count + 1;
+                    let result = prompt::request(
+                        abort.clone(),
+                        is_running.clone(),
+                        &config,
+                        line.to_string(),
+                        count
+                    );
+                    retry = match result {
+                        Ok(retry) => retry,
+                        Err(e) => {
+                            eprintln!();
+                            eprintln!();
+                            let msg = format!("prompt::request failed with: {e}");
+                            print_error(is_running.clone(), &msg);
+                            false
+                        }
+                    };
+                    count += 1;
                     if retry {
                         let duration = Duration::from_millis(500);
                         thread::sleep(duration);
