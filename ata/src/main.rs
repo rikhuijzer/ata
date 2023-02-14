@@ -14,6 +14,7 @@ use std::sync::mpsc::Receiver;
 use std::sync::mpsc::Sender;
 use std::sync::mpsc;
 use std::thread;
+use std::time::Duration;
 use toml::from_str;
 
 mod help;
@@ -86,12 +87,22 @@ fn main() -> prompt::TokioResult<()> {
         loop {
             let msg: Result<String, _> = rx.recv();
             if let Ok(line) = msg {
-                    prompt::request(
-                        abort.clone(),
-                        is_running.clone(),
-                        &config,
-                        line
-                    ).unwrap();
+                let mut retry = true;
+                let mut count = 0;
+                while retry {
+                    retry = prompt::request(
+                            abort.clone(),
+                            is_running.clone(),
+                            &config,
+                            line.to_string(),
+                            count
+                        ).unwrap();
+                    count = count + 1;
+                    if retry {
+                        let duration = Duration::from_millis(500);
+                        thread::sleep(duration);
+                    }
+                }
             }
         }
     });

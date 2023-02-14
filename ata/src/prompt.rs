@@ -78,13 +78,29 @@ fn value2unquoted_text(value: &serde_json::Value) -> String {
     value.as_str().unwrap().to_string()
 }
 
+fn should_retry(line: &str, count: i64) -> bool {
+    let v: Value = match serde_json::from_str(line) {
+        Ok(line) => line,
+        Err(_) => return false
+    };
+    if v.get("error").is_some() {
+        let error_type = value2unquoted_text(&v["error"]["type"]);
+        if count < 3 && error_type == "server_error" {
+            println!("Server responded with a `server_error`. Trying again...");
+            return true;
+        }
+    }
+    false
+}
+
 #[tokio::main]
 pub async fn request(
             abort: Arc<AtomicBool>,
             is_running: Arc<AtomicBool>,
             config: &super::Config,
-            prompt: String
-        ) -> TokioResult<()> {
+            prompt: String,
+            count: i64
+        ) -> TokioResult<bool> {
 
     is_running.store(true, Ordering::SeqCst);
 
@@ -125,7 +141,7 @@ pub async fn request(
         Err(e) => {
             print_and_flush("\n");
             print_error(is_running, &e.to_string());
-            return Ok(());
+            return Ok(false);
         }
     };
 
@@ -145,7 +161,7 @@ pub async fn request(
                 let data: &str = &line[6..];
                 if data == "[DONE]" {
                     finish_prompt(is_running);
-                    return Ok(());
+                    return Ok(false);
                 };
                 let v: Value = serde_json::from_str(data)?;
 
@@ -160,25 +176,34 @@ pub async fn request(
                 } else if v.get("error").is_some() {
                     let msg = value2unquoted_text(&v["error"]["message"]);
                     print_error(is_running, &msg);
-                    return Ok(());
+                    return Ok(false);
                 } else {
                     print_error(is_running, data);
-                    return Ok(());
+                    return Ok(false);
                 };
             } else if !line.is_empty() {
+                if !had_first_success {
+                    let retry = should_retry(line, count);
+                    if retry {
+                        return Ok(true);
+                    } else {
+                        print_error(is_running, line);
+                        return Ok(false);
+                    }
+                };
                 print_error(is_running, line);
-                return Ok(());
+                return Ok(false);
             };
             if abort.load(Ordering::SeqCst) {
                 abort.store(false, Ordering::SeqCst);
                 finish_prompt(is_running);
-                return Ok(());
+                return Ok(false);
             };
         }
         data_buffer.clear();
     };
     finish_prompt(is_running);
-    Ok(())
+    Ok(false)
 }
 
 #[cfg(test)]
