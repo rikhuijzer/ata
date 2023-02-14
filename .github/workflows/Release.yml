@@ -48,8 +48,9 @@ jobs:
 
       - uses: actions-rs/toolchain@v1
         with:
-          toolchain: stable
+          override: true
           target: ${{ matrix.target }}
+          toolchain: stable
 
       - run: |
           SRC="target/release/ata${{ steps.check.outputs.ext }}"
