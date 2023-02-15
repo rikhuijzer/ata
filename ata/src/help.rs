@@ -45,7 +45,7 @@ temperature = 0.8
 
 Here, replace `<YOUR SECRET API KEY>` with your API key, which you can request via https://beta.openai.com/account/api-keys.
 
-The `max_tokens` sets the maximum amount of tokens that the server will answer with. If the model responds with more tokens, the output will be truncated.
+The `max_tokens` sets the maximum amount of tokens that the server will answer with.
 
 The `temperature` sets the `sampling temperature`. From the OpenAI API docs: "What sampling temperature to use. Higher values means the model will take more risks. Try 0.9 for more creative applications, and 0 (argmax sampling) for ones with a well-defined answer." According to Stephen Wolfram [1], setting it to a higher value such as 0.8 will likely work best in practice.
 
