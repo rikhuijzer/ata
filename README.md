@@ -32,10 +32,18 @@ Next, set the API key, the model that you want to use, and the maximum amount of
 api_key = "<YOUR SECRET API KEY>"
 model = "text-davinci-003"
 max_tokens = 500
-temperature = 0.0
+temperature = 0.8
 ```
 
-and run:
+Here, replace `<YOUR SECRET API KEY>` with your API key, which you can request via https://beta.openai.com/account/api-keys.
+
+The `max_tokens` sets the maximum amount of tokens that the server will answer with. If the model responds with more tokens, the output will be truncated.
+
+The `temperature` sets the `sampling temperature`. From the OpenAI API docs: "What sampling temperature to use. Higher values means the model will take more risks. Try 0.9 for more creative applications, and 0 (argmax sampling) for ones with a well-defined answer." According to Stephen Wolfram [1], setting it to a higher value such as 0.8 will likely work best in practice.
+
+[1]: https://writings.stephenwolfram.com/2023/02/what-is-chatgpt-doing-and-why-does-it-work/
+
+Next, run:
 
 ```sh
 $ ata --config=ata.toml
