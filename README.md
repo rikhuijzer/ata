@@ -24,6 +24,7 @@ At the time of writing, use `text-davinci-003`. Davinci was released together wi
 ## Usage
 
 Download the binary for your system from [Releases](https://github.com/rikhuijzer/ata/releases).
+If you're running Arch Linux, then you can use the AUR packages: [ata](https://aur.archlinux.org/packages/ata), [ata-git](https://aur.archlinux.org/packages/ata-git), or [ata-bin](https://aur.archlinux.org/packages/ata-bin).
 
 Request an API key via <https://beta.openai.com/account/api-keys>.
 Next, set the API key, the model that you want to use, and the maximum amount of tokens that the server can respond with in `ata.toml`:
