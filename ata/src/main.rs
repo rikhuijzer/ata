@@ -1,78 +1,63 @@
+#[macro_use]
+extern crate clap;
+#[macro_use]
+extern crate lazy_static;
+#[macro_use]
+extern crate log;
+
+mod args;
+mod config;
 mod help;
 mod prompt;
 
-use clap::Parser;
-use crate::prompt::print_error;
-use rustyline::Editor;
+use clap::Parser as _;
 use rustyline::error::ReadlineError;
-use serde::Deserialize;
-use std::env;
+use rustyline::Editor;
+
 use std::fs::File;
 use std::io::Read;
-use std::path::Path;
+
 use std::result::Result;
-use std::sync::Arc;
 use std::sync::atomic::AtomicBool;
 use std::sync::atomic::Ordering;
+use std::sync::mpsc;
 use std::sync::mpsc::Receiver;
 use std::sync::mpsc::Sender;
-use std::sync::mpsc;
+use std::sync::Arc;
 use std::thread;
 use std::time::Duration;
-use toml::from_str;
 
-#[derive(Clone, Deserialize, Debug)]
-pub struct Config {
-    api_key: String,
-    model: String,
-    max_tokens: i64,
-    temperature: f64
-}
-
-/// Ask the Terminal Anything (ATA): OpenAI GPT in the terminal
-#[derive(Parser, Debug)]
-#[command(author, version, about, long_about = None)]
-struct Flags {
-    /// Path to the configuration TOML file.
-    #[arg(short = 'c', long = "config", default_value = "ata.toml")]
-    config: String,
-
-    /// Avoid printing the configuration to stdout.
-    #[arg(long)]
-    hide_config: bool,
-
-    /// Print the keyboard shortcuts.
-    #[arg(long)]
-    print_shortcuts: bool,
-}
+use crate::args::Ata;
+use crate::config::Config;
+use crate::prompt::print_error;
 
 fn main() -> prompt::TokioResult<()> {
-    let args: Vec<String> = env::args().collect();
-    let flags: Flags = Flags::parse();
+    init_logger();
+    let flags: Ata = Ata::parse();
     if flags.print_shortcuts {
         help::commands();
         return Ok(());
     }
-    let filename = flags.config;
-    if !Path::new(&filename).exists() {
-        help::missing_toml(args);
+    let filename = flags.config.location();
+    if !filename.exists() {
+        help::missing_toml();
     }
     let mut contents = String::new();
-    File::open(filename).unwrap().read_to_string(&mut contents).unwrap();
+    File::open(filename)
+        .unwrap()
+        .read_to_string(&mut contents)
+        .unwrap();
 
-    let config: Config = from_str(&contents).unwrap();
+    let config = Config::from(contents);
+    config.validate().unwrap_or_else(|e| {
+        error!("Config error!: {e}. Dying.");
+        panic!()
+    });
 
-    let model = config.clone().model;
-    let max_tokens = config.max_tokens;
-    let temperature = config.temperature;
     println!("Ask the Terminal Anything");
 
     if !flags.hide_config {
-        println!();
-        println!("model: {model}");
-        println!("max_tokens: {max_tokens}");
-        println!("temperature: {temperature}");
-        println!();
+        println!("{config}");
     }
 
     let mut rl = Editor::<()>::new()?;
@@ -96,7 +81,7 @@ fn main() -> prompt::TokioResult<()> {
                         is_running.clone(),
                         &config,
                         line.to_string(),
-                        count
+                        count,
                     );
                     retry = match result {
                         Ok(retry) => retry,
@@ -132,26 +117,31 @@ fn main() -> prompt::TokioResult<()> {
                     abort.store(true, Ordering::SeqCst);
                 }
                 if line.is_empty() {
-                    continue
+                    continue;
                 }
                 rl.add_history_entry(line.as_str());
                 tx.send(line).unwrap();
-            },
+            }
             Err(ReadlineError::Interrupted) => {
                 if is_running_clone.load(Ordering::SeqCst) {
                     abort.store(true, Ordering::SeqCst);
                 } else {
-                    break
+                    break;
                 }
-            },
-            Err(ReadlineError::Eof) => {
-                break
-            },
+            }
+            Err(ReadlineError::Eof) => break,
             Err(err) => {
                 eprintln!("{err:?}");
-                break
+                break;
             }
         }
     }
     Ok(())
+}
+
+fn init_logger() {
+    let env = env_logger::Env::default().default_filter_or("warn");
+    env_logger::Builder::from_env(env)
+        .format_timestamp(None)
+        .init();
 }

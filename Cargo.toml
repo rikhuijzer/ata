@@ -2,6 +2,3 @@
 members = [
     "ata"
 ]
-
-[profile.release.package.ata]
-strip = true
