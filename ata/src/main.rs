@@ -56,9 +56,11 @@ struct Flags {
 
 struct ClearEventHandler;
 impl ConditionalEventHandler for ClearEventHandler {
-    fn handle(&self, evt: &Event, _: RepeatCount, _: bool, _: &EventContext) -> Option<Cmd> {
-        debug_assert_eq!(*evt, Event::from(KeyEvent::ctrl('L')));
-        print_prompt();
+    fn handle(&self, _: &Event, _: RepeatCount, _: bool, _: &EventContext) -> Option<Cmd> {
+        thread::spawn(|| {
+            thread::sleep(Duration::from_millis(100));
+            print_prompt();
+        });
         Some(Cmd::ClearScreen)
     }
 }
@@ -91,9 +93,6 @@ fn main() -> prompt::TokioResult<()> {
         println!("temperature: {temperature}");
         println!();
     }
-
-    println!("Use CTRL+L to clear the screen and start a new chat.");
-    println!();
 
     if model.contains("text") {
         eprintln!("\x1b[1mWARNING:\x1b[0m\n\
