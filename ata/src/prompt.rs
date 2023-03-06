@@ -26,12 +26,16 @@ fn print_and_flush(text: &str) {
     std::io::stdout().flush().unwrap();
 }
 
+pub fn print_bold(msg: &str) {
+    println!("\x1b[1m{msg}\x1b[0m");
+}
+
 pub fn print_prompt() {
-    println!("\x1b[1mPrompt: \x1b[0m");
+    print_bold("Prompt: ");
 }
 
 fn print_response() {
-    println!("\x1b[1mResponse: \x1b[0m");
+    print_bold("Response: ");
 }
 
 fn finish_prompt(is_running: Arc<AtomicBool>) {
@@ -120,7 +124,12 @@ pub async fn request(
     // Passing newlines behind the prompt to get a more chat-like experience.
     let body = json!({
         "model": model,
-        "prompt": format!("{sanitized_input}\\n\\n"),
+        "messages": [
+            {
+                "role": "user",
+                "content": format!("{sanitized_input}\\n\\n")
+            }
+        ],
         "max_tokens": max_tokens,
         "temperature": temperature,
         "stream": true
@@ -128,7 +137,7 @@ pub async fn request(
 
     let req = Request::builder()
         .method(Method::POST)
-        .uri("https://api.openai.com/v1/completions")
+        .uri("https://api.openai.com/v1/chat/completions")
         .header("Content-Type", "application/json")
         .header("Authorization", bearer)
         .body(Body::from(body))?;
@@ -172,7 +181,16 @@ pub async fn request(
                 let v: Value = serde_json::from_str(data)?;
 
                 if v.get("choices").is_some() {
-                    let text = value2unquoted_text(&v["choices"][0]["text"]);
+                    let delta = v.get("choices").unwrap()[0].get("delta");
+                    if delta.is_none() {
+                        // Ignoring wrong responses to avoid crashes.
+                        continue;
+                    }
+                    if delta.unwrap().get("content").is_none() {
+                        // Probably switching "role" (`"role":"assistant"`).
+                        continue;
+                    }
+                    let text = value2unquoted_text(&delta.unwrap()["content"]);
                     let processed = post_process(&mut print_buffer, &text);
                     if !had_first_success {
                         had_first_success = true;

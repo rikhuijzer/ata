@@ -66,8 +66,29 @@ $ ata --help
 
 **How much will I have to pay for the API?**
 
-Using OpenAI's API is quite cheap, I have been using this terminal application heavily for a few weeks now and my costs are about $0.15 per day ($4.50 per month).
+Using OpenAI's API is quite cheap, I have been using this terminal application heavily for a few weeks now and my costs are about $0.01 per day ($0.30 per month).
 The first $18.00 for free, so you can use it for about 120 days (4 months) before having to pay.
+
+**How can I make `ata` easily available (without having to specify --config)?**
+
+You can wrap the binary to make it easily available.
+For example, when you have a system with Bash available, you can create the following file:
+
+```sh
+#!/usr/bin/env bash
+
+/path/to/ata/binary --config=/path/to/config/toml "$@"
+```
+
+and call it `ata.sh` and place it somewhere in your `PATH`.
+For example, at `~/.local/bin/ata.sh`.
+Next, you can use
+
+```sh
+$ ata
+```
+
+From anywhere on your system and have it automatically loaded with the right configuration.
 
 **Can I build the binary myself?**
 

@@ -3,7 +3,15 @@ mod prompt;
 
 use clap::Parser;
 use crate::prompt::print_error;
+use crate::prompt::print_prompt;
+use rustyline::Cmd;
+use rustyline::ConditionalEventHandler;
 use rustyline::Editor;
+use rustyline::Event;
+use rustyline::EventContext;
+use rustyline::EventHandler;
+use rustyline::KeyEvent;
+use rustyline::RepeatCount;
 use rustyline::error::ReadlineError;
 use serde::Deserialize;
 use std::env;
@@ -46,6 +54,15 @@ struct Flags {
     print_shortcuts: bool,
 }
 
+struct ClearEventHandler;
+impl ConditionalEventHandler for ClearEventHandler {
+    fn handle(&self, evt: &Event, _: RepeatCount, _: bool, _: &EventContext) -> Option<Cmd> {
+        debug_assert_eq!(*evt, Event::from(KeyEvent::ctrl('L')));
+        print_prompt();
+        Some(Cmd::ClearScreen)
+    }
+}
+
 fn main() -> prompt::TokioResult<()> {
     let args: Vec<String> = env::args().collect();
     let flags: Flags = Flags::parse();
@@ -75,7 +92,22 @@ fn main() -> prompt::TokioResult<()> {
         println!();
     }
 
+    println!("Use CTRL+L to clear the screen and start a new chat.");
+    println!();
+
+    if model.contains("text") {
+        eprintln!("\x1b[1mWARNING:\x1b[0m\n\
+            It looks like you are using a text completion model.\n\
+            This will likely result in an \"Invalid URL (POST /v1/chat/completions)\" error.\n\
+            This application only supports chat models such as `gpt-3.5-turbo` since\n\
+            they are cheaper and, according to Greg Brockman, perform better.\n\
+            ");
+    }
+
     let mut rl = Editor::<()>::new()?;
+
+    let clear_handler = EventHandler::Conditional(Box::new(ClearEventHandler));
+    rl.bind_sequence(KeyEvent::ctrl('L'), clear_handler);
 
     let (tx, rx): (Sender<String>, Receiver<String>) = mpsc::channel();
     let is_running = Arc::new(AtomicBool::new(false));
