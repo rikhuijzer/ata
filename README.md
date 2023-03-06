@@ -40,7 +40,6 @@ $ ata --help
 
 **How much will I have to pay for the API?**
 
-Using OpenAI's API is quite cheap, I have been using this terminal application heavily for a few weeks now and my costs are about $0.02 per day ($0.30 per month).
 Using OpenAI's API for chat is very cheap.
 Let's say that an average response is about 500 tokens, so costs $0.001.
 That means that if you do 100 requests per day, then that will cost you about $0.10.
