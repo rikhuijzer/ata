@@ -2,6 +2,8 @@
 name = "ata"
 version = "1.0.3"
 edition = "2021"
+authors = ["Rik Huijzer <t.h.huijzer@rug.nl>", "Fredrick R. Brennan <copypaste@kittens.ph>"]
+license = "MIT"
 
 [dependencies]
 rustyline = "10.1"
