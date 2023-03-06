@@ -66,8 +66,11 @@ $ ata --help
 
 **How much will I have to pay for the API?**
 
-Using OpenAI's API is quite cheap, I have been using this terminal application heavily for a few weeks now and my costs are about $0.01 per day ($0.30 per month).
-The first $18.00 for free, so you can use it for about 120 days (4 months) before having to pay.
+Using OpenAI's API is quite cheap, I have been using this terminal application heavily for a few weeks now and my costs are about $0.02 per day ($0.30 per month).
+Using OpenAI's API for chat is very cheap.
+Let's say that an average response is about 500 tokens, so costs $0.001.
+That means that if you do 100 requests per day, then that will cost you about $0.10.
+OpenAI grants you $18.00 for free, so you can use the API for about 180 days (6 months) before having to pay.
 
 **Can I build the binary myself?**
 
