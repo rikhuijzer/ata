@@ -1,9 +1,12 @@
 mod help;
 mod prompt;
+mod config;
 
 use clap::Parser;
 use crate::prompt::print_error;
 use crate::prompt::print_prompt;
+use crate::config::Config;
+use crate::config::ConfigLocation;
 use rustyline::Cmd;
 use rustyline::ConditionalEventHandler;
 use rustyline::Editor;
@@ -13,11 +16,9 @@ use rustyline::EventHandler;
 use rustyline::KeyEvent;
 use rustyline::RepeatCount;
 use rustyline::error::ReadlineError;
-use serde::Deserialize;
 use std::env;
 use std::fs::File;
 use std::io::Read;
-use std::path::Path;
 use std::result::Result;
 use std::sync::Arc;
 use std::sync::atomic::AtomicBool;
@@ -29,21 +30,13 @@ use std::thread;
 use std::time::Duration;
 use toml::from_str;
 
-#[derive(Clone, Deserialize, Debug)]
-pub struct Config {
-    api_key: String,
-    model: String,
-    max_tokens: i64,
-    temperature: f64
-}
-
 /// Ask the Terminal Anything (ATA): OpenAI GPT in the terminal
 #[derive(Parser, Debug)]
 #[command(author, version, about, long_about = None)]
 struct Flags {
     /// Path to the configuration TOML file.
-    #[arg(short = 'c', long = "config", default_value = "ata.toml")]
-    config: String,
+    #[arg(short = 'c', long = "config", default_value = "default")]
+    config: ConfigLocation,
 
     /// Avoid printing the configuration to stdout.
     #[arg(long)]
@@ -52,6 +45,10 @@ struct Flags {
     /// Print the keyboard shortcuts.
     #[arg(long)]
     print_shortcuts: bool,
+
+    /// Print the default config location.
+    #[arg(long)]
+    print_default_config_location: bool,
 }
 
 struct ClearEventHandler;
@@ -72,8 +69,14 @@ fn main() -> prompt::TokioResult<()> {
         help::commands();
         return Ok(());
     }
-    let filename = flags.config;
-    if !Path::new(&filename).exists() {
+    if flags.print_default_config_location {
+        let default_path = config::default_path(None);
+        println!("{default_path:?}");
+        return Ok(());
+    }
+    let filename = flags.config.location();
+    println!("Ask the Terminal Anything");
+    if !filename.exists() {
         help::missing_toml(args);
     }
     let mut contents = String::new();
@@ -84,7 +87,6 @@ fn main() -> prompt::TokioResult<()> {
     let model = config.clone().model;
     let max_tokens = config.max_tokens;
     let temperature = config.temperature;
-    println!("Ask the Terminal Anything");
 
     if !flags.hide_config {
         println!();
