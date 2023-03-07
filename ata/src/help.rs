@@ -1,3 +1,9 @@
+use crate::config;
+use rustyline::Editor;
+use std::fs::File;
+use std::fs;
+use std::io::Write as _;
+
 pub fn commands() {
     println!("
 Ctrl-A, Home        Move cursor to the beginning of line
@@ -29,29 +35,61 @@ Thanks to <https://github.com/kkawakam/rustyline#emacs-mode-default-mode>.
     ");
 }
 
+const EXAMPLE_TOML: &str = r#"api_key = "<YOUR SECRET API KEY>"
+model = "gpt-3.5-turbo"
+max_tokens = 1000
+temperature = 0.8"#;
+
 pub fn missing_toml(args: Vec<String>) {
+    let default_path = config::default_path(None);
     eprintln!(
         r#"
-Could not find the file `ata.toml`. To fix this, use `{} --config=<Path to ata.toml>` or have `ata.toml` in the current dir.
+Could not find a configuration file.
 
-For example, make a new file `ata.toml` in the current directory with the following content (the text between the ```):
+To fix this, use `{} --config=<Path to ata.toml>` or create `{1}`. For the last option, type `y` to write the following example file:
 
 ```
-api_key = "<YOUR SECRET API KEY>"
-model = "text-davinci-003"
-max_tokens = 500
-temperature = 0.8
+{EXAMPLE_TOML}
 ```
 
-Here, replace `<YOUR SECRET API KEY>` with your API key, which you can request via https://beta.openai.com/account/api-keys.
+Next, replace `<YOUR SECRET API KEY>` with your API key, which you can request via https://beta.openai.com/account/api-keys.
 
 The `max_tokens` sets the maximum amount of tokens that the server will answer with.
 
 The `temperature` sets the `sampling temperature`. From the OpenAI API docs: "What sampling temperature to use. Higher values means the model will take more risks. Try 0.9 for more creative applications, and 0 (argmax sampling) for ones with a well-defined answer." According to Stephen Wolfram [1], setting it to a higher value such as 0.8 will likely work best in practice.
 
 [1]: https://writings.stephenwolfram.com/2023/02/what-is-chatgpt-doing-and-why-does-it-work/
+    "#,
+        args[0],
+        default_path.display()
+    );
 
-    "#, args[0]);
+    let mut rl = Editor::<()>::new().unwrap();
+    let msg = format!(
+        "\x1b[1mDo you want me to write this example file to {0:?} for you to edit? [y/N]\x1b[0m",
+        default_path
+    );
+    let readline = rl.readline(&msg);
+    if let Ok(msg) = readline {
+        let response: bool = msg
+            .trim()
+            .chars()
+            .next()
+            .map(|c| c.to_lowercase().collect::<String>() == "y")
+            .unwrap_or(false);
+        if response {
+            if !default_path.exists() && !default_path.parent().unwrap().is_dir() {
+                let dir = default_path.parent().unwrap();
+                fs::create_dir_all(dir).expect("Could not make configuration directory");
+            }
+            let mut f = File::create(&default_path).expect("Unable to create file");
+            f.write_all(EXAMPLE_TOML.as_bytes())
+                .expect("Unable to write to file");
+            println!();
+            println!("Wrote to {default_path:?}.");
+        }
+    }
+
     std::process::exit(1);
 }
 
