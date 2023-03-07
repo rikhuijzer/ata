@@ -3,7 +3,7 @@
 <h3 align="center">ChatGPT in the terminal</h3>
 
 <p align="center">
-  <a href="https://asciinema.org/a/557270"><img src="https://asciinema.org/a/557270.svg" alt="asciicast"></a>
+  <a href="https://asciinema.org/a/565384"><img src="https://asciinema.org/a/565384.svg" alt="asciicast"></a>
 </p>
 
 <h3 align=center>
@@ -42,7 +42,7 @@ $ ata --help
 
 Using OpenAI's API for chat is very cheap.
 Let's say that an average response is about 500 tokens, so costs $0.001.
-That means that if you do 100 requests per day, then that will cost you about $0.10.
+That means that if you do 100 requests per day, which is a lot, then that will cost you about $0.10 per day ($3 per month).
 OpenAI grants you $18.00 for free, so you can use the API for about 180 days (6 months) before having to pay.
 
 **Can I build the binary myself?**
