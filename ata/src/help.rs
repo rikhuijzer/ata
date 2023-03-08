@@ -37,7 +37,7 @@ Thanks to <https://github.com/kkawakam/rustyline#emacs-mode-default-mode>.
 
 const EXAMPLE_TOML: &str = r#"api_key = "<YOUR SECRET API KEY>"
 model = "gpt-3.5-turbo"
-max_tokens = 1000
+max_tokens = 4096
 temperature = 0.8"#;
 
 pub fn missing_toml(args: Vec<String>) {
@@ -54,7 +54,8 @@ To fix this, use `{} --config=<Path to ata.toml>` or create `{1}`. For the last 
 
 Next, replace `<YOUR SECRET API KEY>` with your API key, which you can request via https://beta.openai.com/account/api-keys.
 
-The `max_tokens` sets the maximum amount of tokens that the server will answer with.
+The `max_tokens` sets the maximum amount of tokens that the server can answer with.
+Longer answers will be truncated.
 
 The `temperature` sets the `sampling temperature`. From the OpenAI API docs: "What sampling temperature to use. Higher values means the model will take more risks. Try 0.9 for more creative applications, and 0 (argmax sampling) for ones with a well-defined answer." According to Stephen Wolfram [1], setting it to a higher value such as 0.8 will likely work best in practice.
 
