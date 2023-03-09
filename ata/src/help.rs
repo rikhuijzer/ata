@@ -37,7 +37,7 @@ Thanks to <https://github.com/kkawakam/rustyline#emacs-mode-default-mode>.
 
 const EXAMPLE_TOML: &str = r#"api_key = "<YOUR SECRET API KEY>"
 model = "gpt-3.5-turbo"
-max_tokens = 4096
+max_tokens = 2048
 temperature = 0.8"#;
 
 pub fn missing_toml(args: Vec<String>) {
