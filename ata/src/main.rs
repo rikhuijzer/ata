@@ -62,6 +62,8 @@ impl ConditionalEventHandler for ClearEventHandler {
     }
 }
 
+static HAD_FIRST_INTERRUPT: AtomicBool = AtomicBool::new(false);
+
 fn main() -> prompt::TokioResult<()> {
     let args: Vec<String> = env::args().collect();
     let flags: Flags = Flags::parse();
@@ -174,12 +176,22 @@ fn main() -> prompt::TokioResult<()> {
                 }
                 rl.add_history_entry(line.as_str());
                 tx.send(line).unwrap();
+                HAD_FIRST_INTERRUPT.store(false, Ordering::Relaxed);
             }
             Err(ReadlineError::Interrupted) => {
                 if is_running_clone.load(Ordering::SeqCst) {
                     abort.store(true, Ordering::SeqCst);
                 } else {
-                    break;
+                    if !HAD_FIRST_INTERRUPT.load(Ordering::Relaxed) {
+                        HAD_FIRST_INTERRUPT.store(true, Ordering::Relaxed);
+                        println!("\nPress Ctrl-C again to exit.");
+                        thread::sleep(Duration::from_millis(100));
+                        println!();
+                        prompt::print_prompt();
+                        continue;
+                    } else {
+                        break;
+                    }
                 }
             }
             Err(ReadlineError::Eof) => break,
