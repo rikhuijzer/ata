@@ -45,6 +45,11 @@ Let's say that an average response is about 500 tokens, so costs $0.001.
 That means that if you do 100 requests per day, which is a lot, then that will cost you about $0.10 per day ($3 per month).
 OpenAI grants you $18.00 for free, so you can use the API for about 180 days (6 months) before having to pay.
 
+**How does this compare to LLM-based search engines such as You.com or Bing Chat?**
+
+At the time of writing, the OpenAI API responds much quicker than the large language model-based search engines and contains no adds.
+It is particularly useful to quickly look up some things like Unicode symbols, historical facts, or word meanings.
+
 **Can I build the binary myself?**
 
 Yes, you can clone the repository and build the project via [`Cargo`](https://github.com/rust-lang/cargo).
