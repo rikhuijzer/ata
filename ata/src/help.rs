@@ -1,7 +1,7 @@
 use crate::config;
 use rustyline::Editor;
-use std::fs::File;
 use std::fs;
+use std::fs::File;
 use std::io::Write as _;
 
 pub fn commands() {
@@ -93,4 +93,3 @@ The `temperature` sets the `sampling temperature`. From the OpenAI API docs: "Wh
 
     std::process::exit(1);
 }
-

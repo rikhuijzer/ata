@@ -1,12 +1,13 @@
+mod config;
 mod help;
 mod prompt;
-mod config;
 
-use clap::Parser;
-use crate::prompt::print_error;
-use crate::prompt::print_prompt;
 use crate::config::Config;
 use crate::config::ConfigLocation;
+use crate::prompt::print_error;
+use crate::prompt::print_prompt;
+use clap::Parser;
+use rustyline::error::ReadlineError;
 use rustyline::Cmd;
 use rustyline::ConditionalEventHandler;
 use rustyline::Editor;
@@ -15,17 +16,16 @@ use rustyline::EventContext;
 use rustyline::EventHandler;
 use rustyline::KeyEvent;
 use rustyline::RepeatCount;
-use rustyline::error::ReadlineError;
 use std::env;
 use std::fs::File;
 use std::io::Read;
 use std::result::Result;
-use std::sync::Arc;
 use std::sync::atomic::AtomicBool;
 use std::sync::atomic::Ordering;
+use std::sync::mpsc;
 use std::sync::mpsc::Receiver;
 use std::sync::mpsc::Sender;
-use std::sync::mpsc;
+use std::sync::Arc;
 use std::thread;
 use std::time::Duration;
 use toml::from_str;
@@ -80,7 +80,10 @@ fn main() -> prompt::TokioResult<()> {
         help::missing_toml(args);
     }
     let mut contents = String::new();
-    File::open(filename).unwrap().read_to_string(&mut contents).unwrap();
+    File::open(filename)
+        .unwrap()
+        .read_to_string(&mut contents)
+        .unwrap();
 
     let config: Config = from_str(&contents).unwrap();
 
@@ -97,12 +100,14 @@ fn main() -> prompt::TokioResult<()> {
     }
 
     if model.contains("text") {
-        eprintln!("\x1b[1mWARNING:\x1b[0m\n\
+        eprintln!(
+            "\x1b[1mWARNING:\x1b[0m\n\
             It looks like you are using a text completion model.\n\
             This will likely result in an \"Invalid URL (POST /v1/chat/completions)\" error.\n\
             This application only supports chat models such as `gpt-3.5-turbo` since\n\
             they are cheaper and, according to Greg Brockman, perform better.\n\
-            ");
+            "
+        );
     }
 
     let mut rl = Editor::<()>::new()?;
@@ -129,7 +134,7 @@ fn main() -> prompt::TokioResult<()> {
                         is_running.clone(),
                         &config,
                         line.to_string(),
-                        count
+                        count,
                     );
                     retry = match result {
                         Ok(retry) => retry,
@@ -165,24 +170,22 @@ fn main() -> prompt::TokioResult<()> {
                     abort.store(true, Ordering::SeqCst);
                 }
                 if line.is_empty() {
-                    continue
+                    continue;
                 }
                 rl.add_history_entry(line.as_str());
                 tx.send(line).unwrap();
-            },
+            }
             Err(ReadlineError::Interrupted) => {
                 if is_running_clone.load(Ordering::SeqCst) {
                     abort.store(true, Ordering::SeqCst);
                 } else {
-                    break
+                    break;
                 }
-            },
-            Err(ReadlineError::Eof) => {
-                break
-            },
+            }
+            Err(ReadlineError::Eof) => break,
             Err(err) => {
                 eprintln!("{err:?}");
-                break
+                break;
             }
         }
     }

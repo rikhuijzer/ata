@@ -14,7 +14,7 @@ pub struct Config {
     pub api_key: String,
     pub model: String,
     pub max_tokens: i64,
-    pub temperature: f64
+    pub temperature: f64,
 }
 
 #[derive(Clone, Deserialize, Debug, Default)]
@@ -41,7 +41,10 @@ impl FromStr for ConfigLocation {
     }
 }
 
-impl<S> From<S> for ConfigLocation where S: AsRef<str> {
+impl<S> From<S> for ConfigLocation
+where
+    S: AsRef<str>,
+{
     fn from(s: S) -> Self {
         Self::from_str(s.as_ref()).unwrap()
     }
@@ -52,7 +55,10 @@ fn get_config_dir() -> PathBuf {
         "ata",
         "Ask the Terminal Anything (ATA) Project Authors",
         "ata",
-    ).unwrap().config_dir().into()
+    )
+    .unwrap()
+    .config_dir()
+    .into()
 }
 
 pub fn default_path(name: Option<&Path>) -> PathBuf {
@@ -60,11 +66,7 @@ pub fn default_path(name: Option<&Path>) -> PathBuf {
     let file: Vec<_> = if let Some(name) = name {
         let mut name = name.to_path_buf();
         name.set_extension("toml");
-        name.as_os_str()
-            .to_raw_bytes()
-            .iter()
-            .copied()
-            .collect()
+        name.as_os_str().to_raw_bytes().iter().copied().collect()
     } else {
         "ata.toml".bytes().collect()
     };
@@ -82,14 +84,12 @@ impl ConfigLocation {
                 }
                 default_path(None)
             }
-            ConfigLocation::Path(pb) => {
-                pb.clone()
-            },
+            ConfigLocation::Path(pb) => pb.clone(),
             ConfigLocation::Named(name) => {
                 if name.as_os_str() == "default" {
                     return match Path::new("ata.toml").exists() {
                         true => Path::new(&"ata.toml").into(),
-                        false => default_path(None)
+                        false => default_path(None),
                     };
                 }
                 default_path(Some(name))
@@ -106,9 +106,11 @@ impl FromStr for Config {
     }
 }
 
-impl<S> From<S> for Config where S: AsRef<str> {
+impl<S> From<S> for Config
+where
+    S: AsRef<str>,
+{
     fn from(s: S) -> Self {
-        Self::from_str(s.as_ref())
-            .unwrap_or_else(|e| panic!("Config parsing failure!: {:?}", e))
+        Self::from_str(s.as_ref()).unwrap_or_else(|e| panic!("Config parsing failure!: {:?}", e))
     }
 }

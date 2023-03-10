@@ -1,17 +1,17 @@
+use hyper::body::HttpBody;
 use hyper::Body;
 use hyper::Client;
 use hyper::Method;
 use hyper::Request;
-use hyper::body::HttpBody;
 use hyper_rustls::HttpsConnectorBuilder;
-use serde_json::Value;
 use serde_json::json;
+use serde_json::Value;
 use std::error::Error;
 use std::io::Write;
 use std::result::Result;
-use std::sync::Arc;
 use std::sync::atomic::AtomicBool;
 use std::sync::atomic::Ordering;
+use std::sync::Arc;
 
 pub type TokioResult<T, E = Box<dyn Error + Send + Sync>> = Result<T, E>;
 
@@ -85,7 +85,7 @@ fn value2unquoted_text(value: &serde_json::Value) -> String {
 fn should_retry(line: &str, count: i64) -> bool {
     let v: Value = match serde_json::from_str(line) {
         Ok(line) => line,
-        Err(_) => return false
+        Err(_) => return false,
     };
     if v.get("error").is_some() {
         let error_type = value2unquoted_text(&v["error"]["type"]);
@@ -105,13 +105,12 @@ fn should_retry(line: &str, count: i64) -> bool {
 
 #[tokio::main]
 pub async fn request(
-            abort: Arc<AtomicBool>,
-            is_running: Arc<AtomicBool>,
-            config: &super::Config,
-            prompt: String,
-            count: i64
-        ) -> TokioResult<bool> {
-
+    abort: Arc<AtomicBool>,
+    is_running: Arc<AtomicBool>,
+    config: &super::Config,
+    prompt: String,
+    count: i64,
+) -> TokioResult<bool> {
     is_running.store(true, Ordering::SeqCst);
 
     let api_key: String = config.clone().api_key;
@@ -133,7 +132,8 @@ pub async fn request(
         "max_tokens": max_tokens,
         "temperature": temperature,
         "stream": true
-    }).to_string();
+    })
+    .to_string();
 
     let req = Request::builder()
         .method(Method::POST)
@@ -148,8 +148,7 @@ pub async fn request(
         .enable_http1()
         .build();
 
-    let client = Client::builder()
-        .build::<_, hyper::Body>(https);
+    let client = Client::builder().build::<_, hyper::Body>(https);
 
     let mut response = match client.request(req).await {
         Ok(response) => response,
@@ -225,7 +224,7 @@ pub async fn request(
             };
         }
         data_buffer.clear();
-    };
+    }
     finish_prompt(is_running);
     Ok(false)
 }
@@ -236,7 +235,10 @@ mod tests {
 
     #[test]
     fn leading_newlines() {
-        assert_eq!(sanitize_input("foo\"bar".to_string()), "foo\\\"ba".to_string());
+        assert_eq!(
+            sanitize_input("foo\"bar".to_string()),
+            "foo\\\"ba".to_string()
+        );
     }
 
     #[test]
