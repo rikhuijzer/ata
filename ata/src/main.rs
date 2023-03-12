@@ -1,7 +1,9 @@
 mod config;
 mod help;
 mod prompt;
+mod url;
 
+use crate::url::request_from_url;
 use crate::config::Config;
 use crate::config::ConfigLocation;
 use crate::prompt::print_error;
@@ -94,15 +96,7 @@ fn main() -> prompt::TokioResult<()> {
     let config: Config = from_str(&contents).unwrap();
 
     if let Some(url) = flags.url {
-        let result = prompt::request_from_url(&config, url);
-        match result {
-            Ok(msg) => {
-                println!("{msg}");
-            }
-            Err(e) => {
-                eprintln!("prompt::request_from_url failed with {e}");
-            }
-        }
+        request_from_url(&config, url);
         return Ok(());
     }
 

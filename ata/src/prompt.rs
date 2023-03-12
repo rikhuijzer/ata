@@ -227,14 +227,6 @@ pub async fn request(
     Ok(false)
 }
 
-pub fn request_from_url(config: &Config, prompt: String) -> TokioResult<String> {
-    let abort = Arc::new(AtomicBool::new(false));
-    let is_running = Arc::new(AtomicBool::new(false));
-    let count = 0;
-    let result = request(abort.clone(), is_running.clone(), config, prompt.clone(), count);
-    Ok("foo".to_string())
-}
-
 #[cfg(test)]
 mod tests {
     use super::*;
