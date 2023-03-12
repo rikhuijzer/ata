@@ -1,17 +1,18 @@
-use hyper::body::HttpBody;
+use crate::Config;
 use hyper::Body;
 use hyper::Client;
 use hyper::Method;
 use hyper::Request;
+use hyper::body::HttpBody;
 use hyper_rustls::HttpsConnectorBuilder;
-use serde_json::json;
 use serde_json::Value;
+use serde_json::json;
 use std::error::Error;
 use std::io::Write;
 use std::result::Result;
+use std::sync::Arc;
 use std::sync::atomic::AtomicBool;
 use std::sync::atomic::Ordering;
-use std::sync::Arc;
 
 pub type TokioResult<T, E = Box<dyn Error + Send + Sync>> = Result<T, E>;
 
@@ -38,7 +39,7 @@ fn print_response() {
     print_bold("Response: ");
 }
 
-fn finish_prompt(is_running: Arc<AtomicBool>) {
+pub fn finish_prompt(is_running: Arc<AtomicBool>) {
     is_running.store(false, Ordering::SeqCst);
     print_and_flush("\n\n");
     print_prompt();
@@ -107,7 +108,7 @@ fn should_retry(line: &str, count: i64) -> bool {
 pub async fn request(
     abort: Arc<AtomicBool>,
     is_running: Arc<AtomicBool>,
-    config: &super::Config,
+    config: &Config,
     prompt: String,
     count: i64,
 ) -> TokioResult<bool> {
@@ -174,7 +175,6 @@ pub async fn request(
             if line.starts_with("data:") {
                 let data: &str = &line[6..];
                 if data == "[DONE]" {
-                    finish_prompt(is_running);
                     return Ok(false);
                 };
                 let v: Value = serde_json::from_str(data)?;
@@ -219,14 +219,20 @@ pub async fn request(
             };
             if abort.load(Ordering::SeqCst) {
                 abort.store(false, Ordering::SeqCst);
-                finish_prompt(is_running);
                 return Ok(false);
             };
         }
         data_buffer.clear();
     }
-    finish_prompt(is_running);
     Ok(false)
+}
+
+pub fn request_from_url(config: &Config, prompt: String) -> TokioResult<String> {
+    let abort = Arc::new(AtomicBool::new(false));
+    let is_running = Arc::new(AtomicBool::new(false));
+    let count = 0;
+    let result = request(abort.clone(), is_running.clone(), config, prompt.clone(), count);
+    Ok("foo".to_string())
 }
 
 #[cfg(test)]

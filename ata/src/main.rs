@@ -49,6 +49,10 @@ struct Flags {
     /// Print the default config location.
     #[arg(long)]
     print_default_config_location: bool,
+
+    /// Process an URL and exit.
+    #[arg(long)]
+    url: Option<String>,
 }
 
 struct ClearEventHandler;
@@ -76,8 +80,8 @@ fn main() -> prompt::TokioResult<()> {
         println!("{default_path:?}");
         return Ok(());
     }
+
     let filename = flags.config.location();
-    println!("Ask the Terminal Anything");
     if !filename.exists() {
         help::missing_toml(args);
     }
@@ -89,10 +93,24 @@ fn main() -> prompt::TokioResult<()> {
 
     let config: Config = from_str(&contents).unwrap();
 
+    if let Some(url) = flags.url {
+        let result = prompt::request_from_url(&config, url);
+        match result {
+            Ok(msg) => {
+                println!("{msg}");
+            }
+            Err(e) => {
+                eprintln!("prompt::request_from_url failed with {e}");
+            }
+        }
+        return Ok(());
+    }
+
     let model = config.clone().model;
     let max_tokens = config.max_tokens;
     let temperature = config.temperature;
 
+    println!("Ask the Terminal Anything");
     if !flags.hide_config {
         println!();
         println!("model: {model}");
@@ -148,6 +166,7 @@ fn main() -> prompt::TokioResult<()> {
                             false
                         }
                     };
+                    prompt::finish_prompt(is_running.clone());
                     count += 1;
                     if retry {
                         let duration = Duration::from_millis(500);
