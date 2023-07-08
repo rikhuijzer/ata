@@ -1,6 +1,6 @@
 [package]
 name = "ata"
-version = "2.0.1"
+version = "2.0.2"
 edition = "2021"
 authors = ["Rik Huijzer <t.h.huijzer@rug.nl>", "Fredrick R. Brennan <copypaste@kittens.ph>"]
 license = "MIT"
