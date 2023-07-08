@@ -236,7 +236,7 @@ mod tests {
     fn leading_newlines() {
         assert_eq!(
             sanitize_input("foo\"bar".to_string()),
-            "foo\\\"ba".to_string()
+            "foo\\\"bar".to_string()
         );
     }
 
