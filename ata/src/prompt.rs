@@ -16,8 +16,7 @@ use std::sync::Arc;
 pub type TokioResult<T, E = Box<dyn Error + Send + Sync>> = Result<T, E>;
 
 fn sanitize_input(input: String) -> String {
-    let mut out = input;
-    out.pop();
+    let out = input.trim_end_matches("\n");
     out.replace('"', "\\\"")
 }
 
@@ -237,7 +236,7 @@ mod tests {
     fn leading_newlines() {
         assert_eq!(
             sanitize_input("foo\"bar".to_string()),
-            "foo\\\"ba".to_string()
+            "foo\\\"bar".to_string()
         );
     }
 
