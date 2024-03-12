@@ -1,3 +1,17 @@
+<h1 align="center"><b>THIS PROJECT IS ABANDONED AND NOT BEING MAINTAINED.</b></h1>
+
+<h2 align="center">
+  Due to the high amount of projects that implement some interface to AI models (high amount of competitors), this project is abandoned.
+</h2>
+
+<br>
+<br>
+<br>
+<br>
+<br>
+<br>
+<br>
+
 <h1 align="center"><code>ata</code>: Ask the Terminal Anything</h1>
 
 <h3 align="center">ChatGPT in the terminal</h3>
