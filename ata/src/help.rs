@@ -37,13 +37,8 @@ Thanks to <https://github.com/kkawakam/rustyline#emacs-mode-default-mode>.
 
 const EXAMPLE_TOML: &str = r#"api_key = "<YOUR SECRET API KEY>"
 model = "gpt-4-turbo-preview"
-org = "<YOUR ORG>"
 max_tokens = 2048
 temperature = 0.8"#;
-
-pub fn toml_format() {
-    println!("The toml config file format may have been changed, please update your config like this;\n{}", EXAMPLE_TOML);
-}
 
 pub fn missing_toml(args: Vec<String>) {
     // At this point the old organization name is not used so we can use the new one.

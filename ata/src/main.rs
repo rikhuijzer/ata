@@ -87,16 +87,16 @@ fn main() -> prompt::TokioResult<()> {
     match File::open(filename) {
         Ok(mut file) => {
             let _ = file.read_to_string(&mut contents);
-        },
+        }
         Err(_) => {
             let _ = File::open(old_filename).map(|mut file| file.read_to_string(&mut contents));
-        },
+        }
     }
 
     let config: Config = from_str(&contents).unwrap();
 
     let model = config.clone().model;
-    let org = match config.clone().org{
+    let org = match config.clone().org {
         Some(org) => org,
         None => "No Organization".to_string(),
     };
