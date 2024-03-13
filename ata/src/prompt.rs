@@ -136,11 +136,15 @@ pub async fn request(
     })
     .to_string();
 
-    let req = Request::builder()
+    let mut req = Request::builder()
         .method(Method::POST)
         .uri("https://api.openai.com/v1/chat/completions")
         .header("Content-Type", "application/json")
-        .header("Authorization", bearer)
+        .header("Authorization", bearer);
+    if let Some(org) = &config.org {
+        req = req.header("OpenAI-Organization", org);
+    }
+    let req = req
         .body(Body::from(body))?;
 
     let https = HttpsConnectorBuilder::new()

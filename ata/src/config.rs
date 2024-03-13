@@ -13,6 +13,7 @@ use toml::de::Error as TomlError;
 pub struct Config {
     pub api_key: String,
     pub model: String,
+    pub org: Option<String>,
     pub max_tokens: i64,
     pub temperature: f64,
 }

@@ -84,20 +84,29 @@ fn main() -> prompt::TokioResult<()> {
         help::missing_toml(args);
     }
     let mut contents = String::new();
-    File::open(filename)
-        .unwrap()
-        .read_to_string(&mut contents)
-        .unwrap();
+    match File::open(filename) {
+        Ok(mut file) => {
+            let _ = file.read_to_string(&mut contents);
+        },
+        Err(_) => {
+            let _ = File::open(old_filename).map(|mut file| file.read_to_string(&mut contents));
+        },
+    }
 
     let config: Config = from_str(&contents).unwrap();
 
     let model = config.clone().model;
+    let org = match config.clone().org{
+        Some(org) => org,
+        None => "No Organization".to_string(),
+    };
     let max_tokens = config.max_tokens;
     let temperature = config.temperature;
 
     if !flags.hide_config {
         println!();
         println!("model: {model}");
+        println!("Organization: {org}");
         println!("max_tokens: {max_tokens}");
         println!("temperature: {temperature}");
         println!();
