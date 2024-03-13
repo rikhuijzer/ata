@@ -48,9 +48,9 @@ jobs:
           rustup target add ${{ matrix.target }}
 
       - run: |
-          SRC="target/release/ata${{ steps.check.outputs.ext }}"
+          SRC="target/${{ matrix.target }}/release/ata${{ steps.check.outputs.ext }}"
           echo "SRC: $SRC"
-          DST="target/${{ matrix.target }}/release/ata-${{ steps.check.outputs.ext }}"
+          DST="target/release/ata-${{ matrix.target }}${{ steps.check.outputs.ext }}"
           echo "DST: $DST"
           cargo build --release --target ${{ matrix.target }}
           mv -v $SRC $DST
