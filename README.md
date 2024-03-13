@@ -43,7 +43,7 @@ temperature = 0.8
 
 An `org` field is optional and can be used to specify which organization is used for an API request.
 The `org` field should use the Organization ID, which can be found at
-https://platform.openai.com/account/organizations.
+https://platform.openai.com/account/organization.
 
 For more information, see:
 

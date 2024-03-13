@@ -59,7 +59,7 @@ For key permissions, select "Restricted" and select write only for "Model capabi
 
 An `org` field is optional and can be used to specify which organization is used for an API request.
 The `org` field should use the Organization ID, which can be found at
-https://platform.openai.com/account/organizations.
+https://platform.openai.com/account/organization.
 
 The `max_tokens` sets the maximum amount of tokens that the server can answer with.
 Longer answers will be truncated.
