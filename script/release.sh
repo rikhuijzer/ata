@@ -16,6 +16,10 @@ echo "VERSION: $VERSION"
 TAGNAME="v$VERSION"
 echo "TAGNAME: $TAGNAME"
 
+echo ""
+echo "ENSURE YOU ARE ON THE MAIN BRANCH"
+echo ""
+
 read -p 'Release notes, which will not trigger a release yet: ' NOTES
 
 read -p "Creating a new tag, which WILL TRIGGER A RELEASE with the following release notes: \"$NOTES\". Are you sure? [y/N]" -n 1 -r
