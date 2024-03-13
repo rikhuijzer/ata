@@ -32,6 +32,19 @@ Press `y` and `ENTER` to create a `ata.toml` file.
 Next, request an API key via <https://platform.openai.com/api-keys> and update the key in the example configuration file.
 They key permissions can be "Restricted" to only "Model capabilities".
 
+For example, a `ata.toml` file could look like this:
+
+```toml
+api_key = "<YOUR SECRET API KEY>"
+model = "gpt-4-turbo-preview"
+max_tokens = 2048
+temperature = 0.8
+```
+
+An `org` field is optional and can be used to specify which organization is used for an API request.
+The `org` field should use the Organization ID, which can be found at
+https://platform.openai.com/account/organizations.
+
 For more information, see:
 
 ```sh

@@ -96,17 +96,17 @@ fn main() -> prompt::TokioResult<()> {
     let config: Config = from_str(&contents).unwrap();
 
     let model = config.clone().model;
-    let org = match config.clone().org {
-        Some(org) => org,
-        None => "No Organization".to_string(),
-    };
+    let org = config.clone().org;
     let max_tokens = config.max_tokens;
     let temperature = config.temperature;
 
     if !flags.hide_config {
         println!();
         println!("model: {model}");
-        println!("Organization: {org}");
+        if org.is_some() {
+            let org = org.unwrap();
+            println!("organization: {org}");
+        }
         println!("max_tokens: {max_tokens}");
         println!("temperature: {temperature}");
         println!();
