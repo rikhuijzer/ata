@@ -22,13 +22,15 @@ TIP:<br>
 ## Usage
 
 Download the binary for your system from [Releases](https://github.com/rikhuijzer/ata/releases).
-If you're running Arch Linux, then you can use the AUR packages: [ata](https://aur.archlinux.org/packages/ata), [ata-git](https://aur.archlinux.org/packages/ata-git), or [ata-bin](https://aur.archlinux.org/packages/ata-bin).
+Or use your package manager to install the application.
+For example, Brew on MacOS or AUR on Arch Linux have packages available.
 
 To specify the API key and some basic model settings, start the application.
 It should give an error and the option to create a configuration file called `ata.toml` for you.
 Press `y` and `ENTER` to create a `ata.toml` file.
 
-Next, request an API key via <https://beta.openai.com/account/api-keys> and update the key in the example configuration file.
+Next, request an API key via <https://platform.openai.com/api-keys> and update the key in the example configuration file.
+They key permissions can be "Restricted" to only "Model capabilities".
 
 For more information, see:
 
@@ -41,9 +43,9 @@ $ ata --help
 **How much will I have to pay for the API?**
 
 Using OpenAI's API for chat is very cheap.
-Let's say that an average response is about 500 tokens, so costs $0.001.
-That means that if you do 100 requests per day, which is a lot, then that will cost you about $0.10 per day ($3 per month).
-OpenAI grants you $18.00 for free, so you can use the API for about 180 days (6 months) before having to pay.
+Let's say that an average response is about 500 tokens, so costs about $0.015 (with GPT-4).
+That means that if you do 50 requests per day, then that will cost you about $0.75 per day ($15 per month assuming you only use it only on workdays).
+If you use GPT-3.5, then the costs will be much lower.
 
 **How does this compare to LLM-based search engines such as You.com or Bing Chat?**
 

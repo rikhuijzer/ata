@@ -72,13 +72,15 @@ fn main() -> prompt::TokioResult<()> {
         return Ok(());
     }
     if flags.print_default_config_location {
-        let default_path = config::default_path(None);
+        let old_org = false;
+        let default_path = config::default_path(None, old_org);
         println!("{default_path:?}");
         return Ok(());
     }
-    let filename = flags.config.location();
+    let old_filename = flags.config.location(true);
+    let filename = flags.config.location(false);
     println!("Ask the Terminal Anything");
-    if !filename.exists() {
+    if !old_filename.exists() && !filename.exists() {
         help::missing_toml(args);
     }
     let mut contents = String::new();

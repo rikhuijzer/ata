@@ -36,12 +36,14 @@ Thanks to <https://github.com/kkawakam/rustyline#emacs-mode-default-mode>.
 }
 
 const EXAMPLE_TOML: &str = r#"api_key = "<YOUR SECRET API KEY>"
-model = "gpt-3.5-turbo"
+model = "gpt-4-turbo-preview"
 max_tokens = 2048
 temperature = 0.8"#;
 
 pub fn missing_toml(args: Vec<String>) {
-    let default_path = config::default_path(None);
+    // At this point the old organization name is not used so we can use the new one.
+    let old_org = false;
+    let default_path = config::default_path(None, old_org);
     eprintln!(
         r#"
 Could not find a configuration file.
@@ -52,7 +54,8 @@ To fix this, use `{} --config=<Path to ata.toml>` or create `{1}`. For the last 
 {EXAMPLE_TOML}
 ```
 
-Next, replace `<YOUR SECRET API KEY>` with your API key, which you can request via https://beta.openai.com/account/api-keys.
+Next, replace `<YOUR SECRET API KEY>` with your API key, which you can request via https://platform.openai.com/api-keys.
+For key permissions, select "Restricted" and select write only for "Model capabilities".
 
 The `max_tokens` sets the maximum amount of tokens that the server can answer with.
 Longer answers will be truncated.
