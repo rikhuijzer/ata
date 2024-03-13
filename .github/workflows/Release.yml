@@ -50,7 +50,7 @@ jobs:
       - run: |
           SRC="target/release/ata${{ steps.check.outputs.ext }}"
           echo "SRC: $SRC"
-          DST="target/release/ata-${{ matrix.target }}${{ steps.check.outputs.ext }}"
+          DST="target/${{ matrix.target }}/release/ata-${{ steps.check.outputs.ext }}"
           echo "DST: $DST"
           cargo build --release --target ${{ matrix.target }}
           mv -v $SRC $DST
