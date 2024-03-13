@@ -1,6 +1,6 @@
 use directories::ProjectDirs;
-use os_str_bytes::OsStrBytes as _;
-use os_str_bytes::OsStringBytes as _;
+use os_str_bytes::OsStrBytes;
+use os_str_bytes::OsStringBytes;
 use serde::Deserialize;
 use std::convert::Infallible;
 use std::ffi::OsString;

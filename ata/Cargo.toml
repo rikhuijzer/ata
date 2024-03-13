@@ -10,7 +10,7 @@ clap = { version = "4.1.4", features = ["derive"] }
 directories = "4.0"
 hyper = { version = "0.14", features = ["full"] }
 hyper-rustls = { version = "0.23" }
-os_str_bytes = "6.4.1"
+os_str_bytes = { version = "7", features = ["conversions"] }
 rustyline = "10.1"
 serde = { version = "1", features = ["derive"] }
 serde_json = { version = "1" }
