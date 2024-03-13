@@ -10,7 +10,7 @@ use clap::Parser;
 use rustyline::error::ReadlineError;
 use rustyline::Cmd;
 use rustyline::ConditionalEventHandler;
-use rustyline::Editor;
+use rustyline::DefaultEditor;
 use rustyline::Event;
 use rustyline::EventContext;
 use rustyline::EventHandler;
@@ -114,7 +114,7 @@ fn main() -> prompt::TokioResult<()> {
         );
     }
 
-    let mut rl = Editor::<()>::new()?;
+    let mut rl = DefaultEditor::new().unwrap();
 
     let clear_handler = EventHandler::Conditional(Box::new(ClearEventHandler));
     rl.bind_sequence(KeyEvent::ctrl('L'), clear_handler);
@@ -176,7 +176,7 @@ fn main() -> prompt::TokioResult<()> {
                 if line.is_empty() {
                     continue;
                 }
-                rl.add_history_entry(line.as_str());
+                let _ = rl.add_history_entry(line.as_str());
                 tx.send(line).unwrap();
                 HAD_FIRST_INTERRUPT.store(false, Ordering::Relaxed);
             }

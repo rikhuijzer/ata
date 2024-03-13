@@ -1,5 +1,5 @@
 use crate::config;
-use rustyline::Editor;
+use rustyline::DefaultEditor;
 use std::fs;
 use std::fs::File;
 use std::io::Write as _;
@@ -68,7 +68,7 @@ The `temperature` sets the `sampling temperature`. From the OpenAI API docs: "Wh
         default_path.display()
     );
 
-    let mut rl = Editor::<()>::new().unwrap();
+    let mut rl = DefaultEditor::new().unwrap();
     let msg = format!(
         "\x1b[1mDo you want me to write this example file to {0:?} for you to edit? [y/N]\x1b[0m",
         default_path
