@@ -20,18 +20,18 @@ jobs:
         include:
           - os: ubuntu-latest
             target: x86_64-unknown-linux-gnu
-          - os: buildjet-2vcpu-ubuntu-2204-arm
-            target: aarch64-unknown-linux-gnu
           - os: macos-latest
             target: x86_64-apple-darwin
+          - os: macos-latest
+            target: aarch64-apple-darwin
           - os: windows-latest
             target: x86_64-pc-windows-msvc
     runs-on: ${{ matrix.os }}
-    timeout-minutes: 30
+    timeout-minutes: 15
     permissions:
       contents: write
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
 
       - run: |
           if [[ ${{ matrix.os }} = "windows-latest" ]]; then
@@ -44,18 +44,17 @@ jobs:
         id: check
         shell: bash
 
-      - uses: actions-rs/toolchain@v1
-        with:
-          override: true
-          target: ${{ matrix.target }}
-          toolchain: stable
+      - run: |
+          rustup update stable
+          rustup default stable
+          rustup target add ${{ matrix.target }}
 
       - run: |
-          SRC="target/release/ata${{ steps.check.outputs.ext }}"
+          SRC="target/${{ matrix.target }}/release/ata${{ steps.check.outputs.ext }}"
           echo "SRC: $SRC"
           DST="target/release/ata-${{ matrix.target }}${{ steps.check.outputs.ext }}"
           echo "DST: $DST"
-          cargo build --release
+          cargo build --release --target ${{ matrix.target }}
           mv -v $SRC $DST
           echo "dst=$DST" >> $GITHUB_OUTPUT
         id: release

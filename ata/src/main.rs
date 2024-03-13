@@ -10,7 +10,7 @@ use clap::Parser;
 use rustyline::error::ReadlineError;
 use rustyline::Cmd;
 use rustyline::ConditionalEventHandler;
-use rustyline::Editor;
+use rustyline::DefaultEditor;
 use rustyline::Event;
 use rustyline::EventContext;
 use rustyline::EventHandler;
@@ -72,13 +72,15 @@ fn main() -> prompt::TokioResult<()> {
         return Ok(());
     }
     if flags.print_default_config_location {
-        let default_path = config::default_path(None);
+        let old_org = false;
+        let default_path = config::default_path(None, old_org);
         println!("{default_path:?}");
         return Ok(());
     }
-    let filename = flags.config.location();
+    let old_filename = flags.config.location(true);
+    let filename = flags.config.location(false);
     println!("Ask the Terminal Anything");
-    if !filename.exists() {
+    if !old_filename.exists() && !filename.exists() {
         help::missing_toml(args);
     }
     let mut contents = String::new();
@@ -112,7 +114,7 @@ fn main() -> prompt::TokioResult<()> {
         );
     }
 
-    let mut rl = Editor::<()>::new()?;
+    let mut rl = DefaultEditor::new().unwrap();
 
     let clear_handler = EventHandler::Conditional(Box::new(ClearEventHandler));
     rl.bind_sequence(KeyEvent::ctrl('L'), clear_handler);
@@ -174,7 +176,7 @@ fn main() -> prompt::TokioResult<()> {
                 if line.is_empty() {
                     continue;
                 }
-                rl.add_history_entry(line.as_str());
+                let _ = rl.add_history_entry(line.as_str());
                 tx.send(line).unwrap();
                 HAD_FIRST_INTERRUPT.store(false, Ordering::Relaxed);
             }

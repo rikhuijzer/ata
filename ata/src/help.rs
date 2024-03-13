@@ -1,5 +1,5 @@
 use crate::config;
-use rustyline::Editor;
+use rustyline::DefaultEditor;
 use std::fs;
 use std::fs::File;
 use std::io::Write as _;
@@ -36,12 +36,14 @@ Thanks to <https://github.com/kkawakam/rustyline#emacs-mode-default-mode>.
 }
 
 const EXAMPLE_TOML: &str = r#"api_key = "<YOUR SECRET API KEY>"
-model = "gpt-3.5-turbo"
+model = "gpt-4-turbo-preview"
 max_tokens = 2048
 temperature = 0.8"#;
 
 pub fn missing_toml(args: Vec<String>) {
-    let default_path = config::default_path(None);
+    // At this point the old organization name is not used so we can use the new one.
+    let old_org = false;
+    let default_path = config::default_path(None, old_org);
     eprintln!(
         r#"
 Could not find a configuration file.
@@ -52,7 +54,8 @@ To fix this, use `{} --config=<Path to ata.toml>` or create `{1}`. For the last 
 {EXAMPLE_TOML}
 ```
 
-Next, replace `<YOUR SECRET API KEY>` with your API key, which you can request via https://beta.openai.com/account/api-keys.
+Next, replace `<YOUR SECRET API KEY>` with your API key, which you can request via https://platform.openai.com/api-keys.
+For key permissions, select "Restricted" and select write only for "Model capabilities".
 
 The `max_tokens` sets the maximum amount of tokens that the server can answer with.
 Longer answers will be truncated.
@@ -65,7 +68,7 @@ The `temperature` sets the `sampling temperature`. From the OpenAI API docs: "Wh
         default_path.display()
     );
 
-    let mut rl = Editor::<()>::new().unwrap();
+    let mut rl = DefaultEditor::new().unwrap();
     let msg = format!(
         "\x1b[1mDo you want me to write this example file to {0:?} for you to edit? [y/N]\x1b[0m",
         default_path

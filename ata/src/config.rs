@@ -1,6 +1,6 @@
 use directories::ProjectDirs;
-use os_str_bytes::OsStrBytes as _;
-use os_str_bytes::OsStringBytes as _;
+use os_str_bytes::OsStrBytes;
+use os_str_bytes::OsStringBytes;
 use serde::Deserialize;
 use std::convert::Infallible;
 use std::ffi::OsString;
@@ -50,10 +50,15 @@ where
     }
 }
 
-fn get_config_dir() -> PathBuf {
+fn get_config_dir(old_org: bool) -> PathBuf {
+    let organization = if old_org {
+        "Ask the Terminal Anything (ATA) Project Authors"
+    } else {
+        "ask the terminal anything"
+    };
     ProjectDirs::from(
         "ata",
-        "Ask the Terminal Anything (ATA) Project Authors",
+        organization,
         "ata",
     )
     .unwrap()
@@ -61,8 +66,8 @@ fn get_config_dir() -> PathBuf {
     .into()
 }
 
-pub fn default_path(name: Option<&Path>) -> PathBuf {
-    let mut config_file = get_config_dir();
+pub fn default_path(name: Option<&Path>, old_org: bool) -> PathBuf {
+    let mut config_file = get_config_dir(old_org);
     let file: Vec<_> = if let Some(name) = name {
         let mut name = name.to_path_buf();
         name.set_extension("toml");
@@ -76,23 +81,29 @@ pub fn default_path(name: Option<&Path>) -> PathBuf {
 }
 
 impl ConfigLocation {
-    pub fn location(&self) -> PathBuf {
+    pub fn location(&self, old_org: bool) -> PathBuf {
         match self {
             ConfigLocation::Auto => {
-                if self.location().exists() {
-                    return self.location();
+                let old_org = true;
+                if self.location(old_org).exists() {
+                    return self.location(old_org);
                 }
-                default_path(None)
+
+                let old_org = false;
+                if self.location(old_org).exists() {
+                    return self.location(old_org);
+                }
+                default_path(None, old_org)
             }
             ConfigLocation::Path(pb) => pb.clone(),
             ConfigLocation::Named(name) => {
                 if name.as_os_str() == "default" {
                     return match Path::new("ata.toml").exists() {
                         true => Path::new(&"ata.toml").into(),
-                        false => default_path(None),
+                        false => default_path(None, old_org),
                     };
                 }
-                default_path(Some(name))
+                default_path(Some(name), old_org)
             }
         }
     }

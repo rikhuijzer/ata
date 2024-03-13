@@ -102,6 +102,8 @@ fn should_retry(line: &str, count: i64) -> bool {
     false
 }
 
+/// This function is the main entry point for the prompt module.
+/// Returns `true` if the request should be retried.
 #[tokio::main]
 pub async fn request(
     abort: Arc<AtomicBool>,
@@ -170,25 +172,49 @@ pub async fn request(
 
         let events = std::str::from_utf8(&data_buffer)?.split("\n\n");
         for line in events {
-            if line.starts_with("data:") {
-                let data: &str = &line[6..];
-                if data == "[DONE]" {
-                    finish_prompt(is_running);
-                    return Ok(false);
+            // Cannot use startswith because there are sometimes leading newlines.
+            if line.contains("data:") {
+                let start = match line.find("{") {
+                    Some(start) => start,
+                    None => {
+                        // Response didn't contain JSON, so it's most likely done.
+                        finish_prompt(is_running);
+                        return Ok(false);
+                    }
                 };
+                let data: &str = &line[start..];
                 let v: Value = serde_json::from_str(data)?;
 
                 if v.get("choices").is_some() {
-                    let delta = v.get("choices").unwrap()[0].get("delta");
+                    let choices = v.get("choices").unwrap();
+                    // We request only one completion.
+                    let choice: &Value = &choices[0];
+                    // println!("choice: {choice}");
+                    if false {  // choice.get("finish_reason").is_some() {
+                        if choice["finish_reason"] == "stop" {
+                            finish_prompt(is_running);
+                            return Ok(false);
+                        }
+                    }
+                    let delta = choice.get("delta");
                     if delta.is_none() {
                         // Ignoring wrong responses to avoid crashes.
                         continue;
                     }
-                    if delta.unwrap().get("content").is_none() {
+                    let content = delta.unwrap().get("content");
+                    if content.is_none() {
                         // Probably switching "role" (`"role":"assistant"`).
                         continue;
                     }
-                    let text = value2unquoted_text(&delta.unwrap()["content"]);
+                    let content = content.unwrap();
+                    let text = value2unquoted_text(&content);
+                    // The first response is (sometimes?) empty.
+                    if text.is_empty() {
+                        if !had_first_success {
+                            had_first_success = true;
+                        }
+                        continue;
+                    }
                     let processed = post_process(&mut print_buffer, &text);
                     if !had_first_success {
                         had_first_success = true;
@@ -197,10 +223,12 @@ pub async fn request(
                     print_and_flush(&processed);
                 } else if v.get("error").is_some() {
                     let msg = value2unquoted_text(&v["error"]["message"]);
+                    let msg = format!("Received an error message from OpenAI: {msg}");
                     print_error(is_running, &msg);
                     return Ok(false);
                 } else {
-                    print_error(is_running, data);
+                    let msg = format!("Response didn't contain 'choices': {data}");
+                    print_error(is_running, &msg);
                     return Ok(false);
                 };
             } else if !line.is_empty() {
@@ -209,11 +237,13 @@ pub async fn request(
                     if retry {
                         return Ok(true);
                     } else {
-                        print_error(is_running, line);
+                        let msg = format!("Response didn't contain 'data': {line}");
+                        print_error(is_running, &msg);
                         return Ok(false);
                     }
                 };
-                print_error(is_running, line);
+                let msg = format!("Response didn't contain 'data:': {line}");
+                print_error(is_running, &msg);
                 return Ok(false);
             };
             if abort.load(Ordering::SeqCst) {
