@@ -83,6 +83,11 @@ fn main() -> prompt::TokioResult<()> {
     if !old_filename.exists() && !filename.exists() {
         help::missing_toml(args);
     }
+    let filename = if old_filename.exists() {
+        old_filename
+    } else {
+        filename
+    };
     let mut contents = String::new();
     File::open(filename)
         .unwrap()
