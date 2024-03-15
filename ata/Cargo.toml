@@ -1,6 +1,6 @@
 [package]
 name = "ata"
-version = "2.0.3"
+version = "2.0.4"
 edition = "2021"
 authors = ["The ATA Developers"]
 license = "MIT"
