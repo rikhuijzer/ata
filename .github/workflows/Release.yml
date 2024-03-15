@@ -60,7 +60,7 @@ jobs:
         id: release
         shell: bash
 
-      - uses: softprops/action-gh-release@v1
+      - uses: softprops/action-gh-release@v2
         if: startsWith(github.ref, 'refs/tags/')
         with:
           fail_on_unmatched_files: true
