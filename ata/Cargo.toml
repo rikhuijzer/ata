@@ -9,7 +9,7 @@ license = "MIT"
 clap = { version = "4.1.4", features = ["derive"] }
 directories = "5.0"
 hyper = { version = "0.14", features = ["full"] }
-hyper-rustls = { version = "0.23" }
+hyper-rustls = { version = "0.26" }
 os_str_bytes = { version = "7", features = ["conversions"] }
 rustyline = "14"
 serde = { version = "1", features = ["derive"] }
