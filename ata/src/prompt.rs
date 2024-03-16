@@ -136,12 +136,15 @@ pub async fn request(
     })
     .to_string();
 
-    let req = Request::builder()
+    let mut req = Request::builder()
         .method(Method::POST)
         .uri("https://api.openai.com/v1/chat/completions")
         .header("Content-Type", "application/json")
-        .header("Authorization", bearer)
-        .body(Body::from(body))?;
+        .header("Authorization", bearer);
+    if let Some(org) = &config.org {
+        req = req.header("OpenAI-Organization", org);
+    }
+    let req = req.body(Body::from(body))?;
 
     let https = HttpsConnectorBuilder::new()
         .with_native_roots()
@@ -190,7 +193,7 @@ pub async fn request(
                     // We request only one completion.
                     let choice: &Value = &choices[0];
                     // println!("choice: {choice}");
-                    if false {  // choice.get("finish_reason").is_some() {
+                    if choice.get("finish_reason").is_some() {
                         if choice["finish_reason"] == "stop" {
                             finish_prompt(is_running);
                             return Ok(false);
