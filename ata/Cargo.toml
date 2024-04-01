@@ -6,7 +6,7 @@ authors = ["The ATA Developers"]
 license = "MIT"
 
 [dependencies]
-clap = { version = "4.1.4", features = ["derive"] }
+clap = { version = "4.5.4", features = ["derive"] }
 directories = "5.0"
 hyper = { version = "0.14", features = ["full"] }
 hyper-rustls = { version = "0.23" }
