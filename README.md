@@ -1,3 +1,19 @@
+
+<h1 align="center"><b>
+  NOTE
+</b></h1>
+
+<h3 align="center">
+  Instead of using <code>ata</code>, I would advice most people to use 
+  <a href="https://github.com/simonw/llm"><code>llm</code></a>
+  by Simon Willison instead.
+  It supports more models and ways to interact with models.
+</h3>
+
+<br>
+<br>
+<br>
+
 <h1 align="center"><code>ata</code>: Ask the Terminal Anything</h1>
 
 <h3 align="center">ChatGPT in the terminal</h3>
