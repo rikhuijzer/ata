@@ -13,6 +13,7 @@ use toml::de::Error as TomlError;
 pub struct Config {
     pub api_key: String,
     pub model: String,
+    pub org: Option<String>,
     pub max_tokens: i64,
     pub temperature: f64,
 }
@@ -56,14 +57,10 @@ fn get_config_dir(old_org: bool) -> PathBuf {
     } else {
         "ask the terminal anything"
     };
-    ProjectDirs::from(
-        "ata",
-        organization,
-        "ata",
-    )
-    .unwrap()
-    .config_dir()
-    .into()
+    ProjectDirs::from("ata", organization, "ata")
+        .unwrap()
+        .config_dir()
+        .into()
 }
 
 pub fn default_path(name: Option<&Path>, old_org: bool) -> PathBuf {
