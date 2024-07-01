@@ -8,7 +8,7 @@ license = "MIT"
 [dependencies]
 clap = { version = "4.5.4", features = ["derive"] }
 directories = "5.0"
-hyper = { version = "0.14", features = ["full"] }
+hyper = { version = "1.4", features = ["full"] }
 hyper-rustls = { version = "0.23" }
 os_str_bytes = { version = "7", features = ["conversions"] }
 rustyline = "14"
